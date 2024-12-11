@@ -2,50 +2,59 @@ import cv2 as cv
 import numpy as np
 from imutils import perspective as imutils_perspective
 from imutils import contours as imutils_contours
-from imutils import resize as imutils_resize
 from imutils import grab_contours as imutils_grab_contours
 from scipy.spatial import distance
 import os
 
 # Constants
+IMAGES_DIRECTORY = "test-images"
 MEASURE_UNIT = "cm"
 REFERENCE_OBJECTS = {
     "card": {"cm": 8.56, "in": 3.37},
     "coin": {"cm": 2.42, "in": 0.95},
 }
 BLUR_SIZE = (7, 7)
-CANNY_WINDOW_NAME = 'Canny Edge Detection'
 CANNY_KERNEL = np.ones((3, 3), np.uint8)
 CANNY_DILATE_ITERATIONS = 5
 CANNY_ERODE_ITERATIONS = 3
-MIN_CONTOUR_AREA = 10000
-DESIRED_IMAGE_WIDTH = 1600
 TEXT_FONT = cv.FONT_HERSHEY_SIMPLEX
-TEXT_SCALE = 0.65
+TEXT_SCALE = 1.2
 TEXT_COLOR = (0, 0, 0)
-TEXT_THICKNESS = 2
+TEXT_THICKNESS = 3
 BOX_COLOR = (0, 255, 0)
-POINT_COLOR = (0, 0, 255)
 LINE_COLOR = (255, 0, 255)
-POINT_RADIUS = 5
 LINE_THICKNESS = 2
-OUTPUT_WINDOW_NAME = 'Image With Measurements'
+OUTPUT_WINDOW_NAME = 'Image With Estimated Measurements'
 
 
 # Functions
-def calculate_midpoint(point_a, point_b):
-    """Calculate the midpoint between two points."""
-    return ((point_a[0] + point_b[0]) * 0.5, (point_a[1] + point_b[1]) * 0.5)
+def calc_midpoint(first_point, second_point):
+    midpoint_x = (first_point[0] + second_point[0]) * 0.5
+    midpoint_y = (first_point[1] + second_point[1]) * 0.5
+    return (midpoint_x, midpoint_y)
 
 
-def adjust_canny_thresholds(input_image):
-    """Adjust Canny edge detection thresholds dynamically using trackbars."""
-    cv.namedWindow(CANNY_WINDOW_NAME)
-    cv.createTrackbar('Upper Threshold', CANNY_WINDOW_NAME,
-                      20, 255, lambda value: value)
-    while True:
-        upper_threshold = cv.getTrackbarPos(
-            'Upper Threshold', CANNY_WINDOW_NAME)
+def adjust_canny_thresholds(input_image, upper_threshold=None):
+    if upper_threshold == None:
+        window_name = 'Canny Edge Detection'
+        cv.namedWindow(window_name)
+        cv.createTrackbar('Upper Threshold', window_name,
+                          100, 255, lambda value: value)
+        while True:
+            upper_threshold = cv.getTrackbarPos(
+                'Upper Threshold', window_name)
+            edges_detected = cv.Canny(
+                input_image, 10, upper_threshold)
+            edges_detected = cv.dilate(
+                edges_detected, CANNY_KERNEL, iterations=CANNY_DILATE_ITERATIONS)
+            edges_detected = cv.erode(
+                edges_detected, CANNY_KERNEL, iterations=CANNY_ERODE_ITERATIONS)
+
+            cv.imshow(window_name, edges_detected)
+            if cv.waitKey(1) & 0xFF == ord('q'):
+                cv.destroyWindow(window_name)
+                break
+    else:
         edges_detected = cv.Canny(
             input_image, 10, upper_threshold)
         edges_detected = cv.dilate(
@@ -53,26 +62,59 @@ def adjust_canny_thresholds(input_image):
         edges_detected = cv.erode(
             edges_detected, CANNY_KERNEL, iterations=CANNY_ERODE_ITERATIONS)
 
-        cv.imshow(CANNY_WINDOW_NAME, edges_detected)
-        if cv.waitKey(1) & 0xFF == ord('q'):
-            cv.destroyWindow(CANNY_WINDOW_NAME)
-            break
-
     return edges_detected
+
+
+def calc_dimensions_px(contour):
+    # Calculate Rotated Bounding Box
+    bounding_box = cv.minAreaRect(contour)
+    bounding_box = cv.boxPoints(bounding_box)
+    bounding_box = np.array(bounding_box, dtype="int")
+    bounding_box = imutils_perspective.order_points(bounding_box)
+
+    # Calculate Midpoints and Dimensions
+    (top_left, top_right, bottom_right, bottom_left) = bounding_box
+
+    # Calculate Midpoints of Edges
+    (top_edge_mid_x, top_edge_mid_y) = calc_midpoint(
+        top_left, top_right)
+    (bottom_edge_mid_x, bottom_edge_mid_y) = calc_midpoint(
+        bottom_left, bottom_right)
+    (left_edge_mid_x, left_edge_mid_y) = calc_midpoint(
+        top_left, bottom_left)
+    (right_edge_mid_x, right_edge_mid_y) = calc_midpoint(
+        top_right, bottom_right)
+
+    width_px = distance.euclidean((left_edge_mid_x, left_edge_mid_y), (
+        right_edge_mid_x, right_edge_mid_y))
+    height_px = distance.euclidean((top_edge_mid_x, top_edge_mid_y), (
+        bottom_edge_mid_x, bottom_edge_mid_y))
+
+    return width_px, height_px
+
+
+def calc_pixels_per_metric(width_px, reference_object_width):
+    return width_px / reference_object_width
+
+
+def calc_dimensions_real(width_px, height_px, pixels_per_metric):
+    real_width = width_px / pixels_per_metric
+    real_height = height_px / pixels_per_metric
+
+    return real_width, real_height
 
 
 def estimate_measurement(image_path, reference_object_width):
     # Load and Preprocess the Image
     input_image = cv.imread(image_path)
-    input_image = imutils_resize(
-        input_image, width=DESIRED_IMAGE_WIDTH) if input_image.shape[1] > DESIRED_IMAGE_WIDTH else input_image
 
     # Convert to Grayscale and Apply Gaussian Blur
     gray_image = cv.cvtColor(input_image, cv.COLOR_BGR2GRAY)
     blurred_image = cv.GaussianBlur(gray_image, BLUR_SIZE, 0)
 
     # Edge Detection
-    edges_detected = adjust_canny_thresholds(blurred_image)
+    edges_detected = adjust_canny_thresholds(
+        blurred_image, upper_threshold=120)
 
     # Find Contours
     contour_list = cv.findContours(
@@ -80,64 +122,56 @@ def estimate_measurement(image_path, reference_object_width):
     contour_list = imutils_grab_contours(contour_list)
     (contour_list, _) = imutils_contours.sort_contours(contour_list)
 
-    pixels_per_metric = None
+    # Initiallize the Pixel per Metric
+    reference_object_contour = contour_list[0]
+    width_px, height_px = calc_dimensions_px(reference_object_contour)
+    pixels_per_metric = calc_pixels_per_metric(
+        width_px, reference_object_width)
+    width_real, height_real = calc_dimensions_real(
+        width_px, height_px, pixels_per_metric)
+
+    contour_list = [contour_list[0], contour_list[-1]]
 
     # Process Each Contour
-    for single_contour in contour_list:
-        if cv.contourArea(single_contour) < MIN_CONTOUR_AREA:
-            continue
-
+    for contour in contour_list:
         # Calculate Rotated Bounding Box
-        bounding_box = cv.minAreaRect(single_contour)
+        bounding_box = cv.minAreaRect(contour)
         bounding_box = cv.boxPoints(bounding_box)
         bounding_box = np.array(bounding_box, dtype="int")
         bounding_box = imutils_perspective.order_points(bounding_box)
         cv.drawContours(input_image, [bounding_box.astype(
             "int")], -1, BOX_COLOR, LINE_THICKNESS)
 
-        for (x_coordinate, y_coordinate) in bounding_box:
-            cv.circle(input_image, (int(x_coordinate), int(
-                y_coordinate)), POINT_RADIUS, POINT_COLOR, -1)
-
         # Calculate Midpoints and Dimensions
         (top_left, top_right, bottom_right, bottom_left) = bounding_box
-        (top_left_top_right_x, top_left_top_right_y) = calculate_midpoint(
+        (top_edge_mid_x, top_edge_mid_y) = calc_midpoint(
             top_left, top_right)
-        (bottom_left_bottom_right_x, bottom_left_bottom_right_y) = calculate_midpoint(
+        (bottom_edge_mid_x, bottom_edge_mid_y) = calc_midpoint(
             bottom_left, bottom_right)
-        (top_left_bottom_left_x, top_left_bottom_left_y) = calculate_midpoint(
+        (left_edge_mid_x, left_edge_mid_y) = calc_midpoint(
             top_left, bottom_left)
-        (top_right_bottom_right_x, top_right_bottom_right_y) = calculate_midpoint(
+        (right_edge_mid_x, right_edge_mid_y) = calc_midpoint(
             top_right, bottom_right)
 
-        cv.circle(input_image, (int(top_left_top_right_x), int(
-            top_left_top_right_y)), POINT_RADIUS, LINE_COLOR, -1)
-        cv.circle(input_image, (int(bottom_left_bottom_right_x), int(
-            bottom_left_bottom_right_y)), POINT_RADIUS, LINE_COLOR, -1)
-        cv.circle(input_image, (int(top_left_bottom_left_x), int(
-            top_left_bottom_left_y)), POINT_RADIUS, LINE_COLOR, -1)
-        cv.circle(input_image, (int(top_right_bottom_right_x), int(
-            top_right_bottom_right_y)), POINT_RADIUS, LINE_COLOR, -1)
-        cv.line(input_image, (int(top_left_top_right_x), int(top_left_top_right_y)), (int(
-            bottom_left_bottom_right_x), int(bottom_left_bottom_right_y)), LINE_COLOR, LINE_THICKNESS)
-        cv.line(input_image, (int(top_left_bottom_left_x), int(top_left_bottom_left_y)), (int(
-            top_right_bottom_right_x), int(top_right_bottom_right_y)), LINE_COLOR, LINE_THICKNESS)
+        cv.line(input_image, (int(top_edge_mid_x), int(top_edge_mid_y)), (int(
+            bottom_edge_mid_x), int(bottom_edge_mid_y)), LINE_COLOR, LINE_THICKNESS)
+        cv.line(input_image, (int(left_edge_mid_x), int(left_edge_mid_y)), (int(
+            right_edge_mid_x), int(right_edge_mid_y)), LINE_COLOR, LINE_THICKNESS)
 
-        distance_a = distance.euclidean((top_left_top_right_x, top_left_top_right_y), (
-            bottom_left_bottom_right_x, bottom_left_bottom_right_y))
-        distance_b = distance.euclidean((top_left_bottom_left_x, top_left_bottom_left_y), (
-            top_right_bottom_right_x, top_right_bottom_right_y))
+        width_px = distance.euclidean((left_edge_mid_x, left_edge_mid_y), (
+            right_edge_mid_x, right_edge_mid_y))
+        height_px = distance.euclidean((top_edge_mid_x, top_edge_mid_y), (
+            bottom_edge_mid_x, bottom_edge_mid_y))
 
-        if pixels_per_metric is None:
-            pixels_per_metric = distance_b / reference_object_width
+        width_real, height_real = calc_dimensions_real(
+            width_px, height_px, pixels_per_metric)
 
-        dimension_a = distance_a / pixels_per_metric
-        dimension_b = distance_b / pixels_per_metric
+        print(f"{width_real:.2f}, {height_real:.2f}")
 
-        cv.putText(input_image, f"{dimension_a:.1f}{MEASURE_UNIT}", (int(top_left_top_right_x - 15), int(
-            top_left_top_right_y - 10)), TEXT_FONT, TEXT_SCALE, TEXT_COLOR, TEXT_THICKNESS)
-        cv.putText(input_image, f"{dimension_b:.1f}{MEASURE_UNIT}", (int(top_right_bottom_right_x + 10), int(
-            top_right_bottom_right_y)), TEXT_FONT, TEXT_SCALE, TEXT_COLOR, TEXT_THICKNESS)
+        cv.putText(input_image, f"{width_real:.1f}{MEASURE_UNIT}", (int(left_edge_mid_x - 50), int(
+            left_edge_mid_y)), TEXT_FONT, TEXT_SCALE, TEXT_COLOR, TEXT_THICKNESS)
+        cv.putText(input_image, f"{height_real:.1f}{MEASURE_UNIT}", (int(top_edge_mid_x - 15), int(
+            top_edge_mid_y + 30)), TEXT_FONT, TEXT_SCALE, TEXT_COLOR, TEXT_THICKNESS)
 
     # Display the Result
     cv.imshow(OUTPUT_WINDOW_NAME, input_image)
@@ -145,39 +179,17 @@ def estimate_measurement(image_path, reference_object_width):
     cv.destroyAllWindows()
 
 
-DIRECTORY = "test-images"
-for file_name in os.listdir(DIRECTORY):
-    # if not file_name.lower().endswith(('.png', '.jpg', '.jpeg')):
-    #     continue
-
-    if not file_name.lower().endswith('.jpeg'):
-        continue
-
+for file_name in os.listdir(IMAGES_DIRECTORY):
     if file_name.lower().startswith('coin-'):
         reference_object_width = REFERENCE_OBJECTS['coin'][MEASURE_UNIT]
 
     elif file_name.lower().startswith('card-'):
         reference_object_width = REFERENCE_OBJECTS['card'][MEASURE_UNIT]
 
-    image_path = os.path.join(DIRECTORY, file_name)
+    image_path = os.path.join(IMAGES_DIRECTORY, file_name)
 
     estimate_measurement(image_path, reference_object_width)
 
-# image_path = "test-images/card-laptop.jpg"
+# image_path = IMAGES_DIRECTORY + "/card-phone.jpg"
 # reference_object_width = REFERENCE_OBJECTS['card'][MEASURE_UNIT]
 # estimate_measurement(image_path, reference_object_width)
-
-
-actual_measurements = {
-    # Item: Width, Height, Breath in cm
-    "Laptop": [34, 24, 3],
-    "Tissue Box": [24, 12, 8.5],
-    "Mini Bucket": [16, 16, 15],
-    "Milkpack": [9, 25, 6.2],
-    "USB": [4, 1.2, 0.3],
-    "Matchbox": [5.8, 4.5, 1.5],
-    "Card": [8.5, 5.3],
-    "2 Coin": [2, 2],
-    "1 Coin": [1.8, 1.8],
-    "5 Coin": [1.6, 1.6],
-}
