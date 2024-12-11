@@ -5,7 +5,6 @@ from imutils import contours as imutils_contours
 from imutils import resize as imutils_resize
 from imutils import grab_contours as imutils_grab_contours
 from scipy.spatial import distance
-import argparse
 import os
 
 # Constants
@@ -19,11 +18,11 @@ CANNY_WINDOW_NAME = 'Canny Edge Detection'
 CANNY_KERNEL = np.ones((3, 3), np.uint8)
 CANNY_DILATE_ITERATIONS = 5
 CANNY_ERODE_ITERATIONS = 3
-MIN_CONTOUR_AREA = 1000
+MIN_CONTOUR_AREA = 10000
 DESIRED_IMAGE_WIDTH = 1600
 TEXT_FONT = cv.FONT_HERSHEY_SIMPLEX
 TEXT_SCALE = 0.65
-TEXT_COLOR = (255, 255, 255)
+TEXT_COLOR = (0, 0, 0)
 TEXT_THICKNESS = 2
 BOX_COLOR = (0, 255, 0)
 POINT_COLOR = (0, 0, 255)
@@ -148,8 +147,12 @@ def estimate_measurement(image_path, reference_object_width):
 
 DIRECTORY = "test-images"
 for file_name in os.listdir(DIRECTORY):
-    if not file_name.lower().endswith(('.png', '.jpg', '.jpeg')):
+    # if not file_name.lower().endswith(('.png', '.jpg', '.jpeg')):
+    #     continue
+
+    if not file_name.lower().endswith('.jpeg'):
         continue
+
     if file_name.lower().startswith('coin-'):
         reference_object_width = REFERENCE_OBJECTS['coin'][MEASURE_UNIT]
 
@@ -163,3 +166,18 @@ for file_name in os.listdir(DIRECTORY):
 # image_path = "test-images/card-laptop.jpg"
 # reference_object_width = REFERENCE_OBJECTS['card'][MEASURE_UNIT]
 # estimate_measurement(image_path, reference_object_width)
+
+
+actual_measurements = {
+    # Item: Width, Height, Breath in cm
+    "Laptop": [34, 24, 3],
+    "Tissue Box": [24, 12, 8.5],
+    "Mini Bucket": [16, 16, 15],
+    "Milkpack": [9, 25, 6.2],
+    "USB": [4, 1.2, 0.3],
+    "Matchbox": [5.8, 4.5, 1.5],
+    "Card": [8.5, 5.3],
+    "2 Coin": [2, 2],
+    "1 Coin": [1.8, 1.8],
+    "5 Coin": [1.6, 1.6],
+}
