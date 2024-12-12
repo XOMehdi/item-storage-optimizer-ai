@@ -8,7 +8,7 @@ import os
 
 # Constants
 IMAGES_DIRECTORY = "test-images"
-MEASURE_UNIT = "cm"
+MEASURE_UNIT = "in"
 REFERENCE_OBJECTS = {
     "card": {"cm": 8.56, "in": 3.37},
     "coin": {"cm": 2.42, "in": 0.95},
@@ -193,3 +193,19 @@ for file_name in os.listdir(IMAGES_DIRECTORY):
 # image_path = IMAGES_DIRECTORY + "/card-phone.jpg"
 # reference_object_width = REFERENCE_OBJECTS['card'][MEASURE_UNIT]
 # estimate_measurement(image_path, reference_object_width)
+
+real_measurements_cm = {
+    # Item: Width, Height, Breath
+    "Card": [8.5, 5.3],
+    "Laptop": [32.5, 21.5, 2.0],
+    "Matchbox": [5.8, 4.5, 1.5],
+    "Mouse": [11.8, 5.8, 2.4],
+    "Phone": [15.5, 7.5, 0.8],
+    "USB": [4, 1.2, 0.3],
+    "Tissue Box": [24, 12, 8.5],
+    "Mini Bucket": [16, 16, 15],
+    "Milkpack": [9, 25, 6.2],
+    "2 Coin": [2, 2],
+    "1 Coin": [1.8, 1.8],
+    "5 Coin": [1.6, 1.6],
+}
