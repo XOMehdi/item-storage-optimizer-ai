@@ -1,60 +1,17 @@
 import os
-from main import measure_3d_item
-
-
-# def calculate_accuracy(measured_values, real_measurements):
-#     accuracies = {}
-
-#     for item, real_dims in real_measurements.items():
-#         if item.lower() in measured_values:
-#             measured_dims = measured_values[item.lower()]
-
-#             if len(real_dims) != len(measured_dims):
-#                 print(
-#                     f"Dimension mismatch for {item}: Expected {len(real_dims)} values, Got {len(measured_dims)}")
-#                 continue
-
-#             accuracy_scores = []
-#             for measured, real in zip(measured_dims, real_dims):
-#                 accuracy = (1 - abs(measured - real) / real) * 100
-#                 accuracy_scores.append(accuracy)
-
-#             accuracies[item] = {
-#                 'measured': measured_dims,
-#                 'real': real_dims,
-#                 'accuracy': accuracy_scores,
-#                 'average_accuracy': sum(accuracy_scores) / len(accuracy_scores)
-#             }
-#         else:
-#             print(f"No measured values found for {item}")
-
-#     return accuracies
-
-
-# # Example usage:
-
-
-# IMAGES_DIRECTORY = "test-images"
-# for file_name in os.listdir(IMAGES_DIRECTORY):
-#     image_path = os.path.join(IMAGES_DIRECTORY, file_name)
-
-#     measured_values = measure_3d_item(image_path, image_path, "card", "left")
-
-# accuracy_results = calculate_accuracy(measured_values, real_measurements_cm)
-# for item, result in accuracy_results.items():
-#     print(f"{item}: {result['average_accuracy']:.2f}% accuracy")
+from main import measure_2d_item
 
 
 def calculate_accuracy(measured_values, real_measurements_list):
     """
     Calculate accuracy of measured 3D dimensions compared to real values.
 
-    :param measured_values: Dictionary with measured dimensions {'item_name': (width, height, depth)}
+    :param measured_values: Dictionary with measured dimensions {'item_name': (width, height)}
     :param real_measurements_list: List of dictionaries [{'item': 'name', 'width': W, 'height': H, 'depth': D}]
     :return: Dictionary with accuracy results
     """
     real_measurements = {
-        item["item"].lower(): (item["width"], item["height"], item["depth"])
+        item["item"].lower(): (item["width"], item["height"])
         for item in real_measurements_list
     }
 
@@ -115,17 +72,10 @@ for file_name in os.listdir(IMAGES_DIRECTORY):
     # Extract item name from file name
     item_name = file_name.split('.')[0].lower()
 
-    side_image_path = image_path.replace(
-        "front", "side")  # Assuming naming convention
-
-    if not os.path.exists(side_image_path):
-        print(f"Skipping {file_name}: No side view found.")
-        continue
-
-    measurements = measure_3d_item(image_path, side_image_path, "card", "left")
+    measurements = measure_2d_item(image_path, "left", 8.56)
 
     measured_values[item_name] = (
-        measurements["width"], measurements["height"], measurements["depth"]
+        measurements["width"], measurements["height"]
     )
 
 accuracy_results = calculate_accuracy(measured_values, real_measurements_cm)

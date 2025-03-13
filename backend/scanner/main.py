@@ -22,7 +22,7 @@ REFERENCE_OBJECTS = {
     "coin": {"cm": 2.42, "in": 0.95},
 }
 ENABLE_BLUR_SELECTION = False
-DISPLAY_OUTPUT_WINDOW = False
+DISPLAY_OUTPUT_WINDOW = True if ENABLE_BLUR_SELECTION else False
 BLUR_SIZE = (7, 7)
 CANNY_KERNEL = np.ones((3, 3), np.uint8)
 CANNY_DILATE_ITERATIONS = 5
@@ -322,6 +322,28 @@ def measure_2d_item(image_path, ref_obj_pos, ref_obj_width_real):
     return {"width": obj_width_real, "height": obj_height_real}
 
 
+def determine_3d_dimensions(front_measurements, side_measurements):
+
+    front_width, front_height = front_measurements["width"], front_measurements["height"]
+    side_width, side_height = side_measurements["width"], side_measurements["height"]
+
+    # Store in a sorted list from largest to smallest
+    dimensions = [front_width, front_height, side_width, side_height]
+    dimensions.sort(reverse=True)
+
+    # The smallest value is the depth
+    depth = dimensions[3]
+
+    # Check if the two largest values come from the same image
+    if (dimensions[0] == front_width and dimensions[1] == front_height) or \
+       (dimensions[0] == side_width and dimensions[1] == side_width, side_height):
+        width, height = dimensions[0], dimensions[1]
+    else:
+        width, height = dimensions[0], dimensions[2]
+
+    return width, height, depth
+
+
 def measure_3d_item(front_image_path, side_image_path, ref_obj, ref_obj_pos):
     ref_obj_width_real = REFERENCE_OBJECTS[ref_obj][MEASURE_UNIT]
 
@@ -330,32 +352,24 @@ def measure_3d_item(front_image_path, side_image_path, ref_obj, ref_obj_pos):
     side_measurements = measure_2d_item(
         side_image_path, ref_obj_pos, ref_obj_width_real)
 
-    width, height = front_measurements["width"], front_measurements["height"]
-    side_width, side_height = side_measurements["width"], side_measurements["height"]
+    width, height, depth = determine_3d_dimensions(
+        front_measurements, side_measurements)
 
-    # Determine the depth by picking the side measurement that doesn't match the front dimensions
-    if side_width not in (width, height):
-        depth = side_width
-    elif side_height not in (width, height):
-        depth = side_height
-    else:
-        depth = side_height  # Default fallback
+    item_name = front_image_path.split("/")[-1].split(".")[0]
 
-    item = front_image_path.split("\\")[-1].split(".")[0]
-
-    return {"item": item, "width": width, "height": height, "depth": depth}
+    return {"item": item_name, "width": width, "height": height, "depth": depth}
 
 
-# # Testing
-# for file_name in os.listdir(IMAGES_DIRECTORY):
-#     image_path = os.path.join(IMAGES_DIRECTORY, file_name)
+# Testing
+if __name__ == "__main__":
+    # for file_name in os.listdir(IMAGES_DIRECTORY):
+    #     image_path = os.path.join(IMAGES_DIRECTORY, file_name)
 
-#     item_dimensions = measure_3d_item(image_path, image_path, "card", "left")
-#     print(item_dimensions)
-
-# item_dimensions = measure_3d_item(
-#     IMAGES_DIRECTORY + "/card-usb-1.jpg", IMAGES_DIRECTORY + "/card-usb-2.jpg", "card", "left")
-# print(item_dimensions)
+    #     item_dimensions = measure_3d_item(image_path, image_path, "card", "left")
+    #     print(item_dimensions)
+    item_dimensions = measure_3d_item(
+        IMAGES_DIRECTORY + "/card-usb-1.jpg", IMAGES_DIRECTORY + "/card-usb-2.jpg", "card", "left")
+    print(item_dimensions)
 
 
 '''
