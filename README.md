@@ -8,4 +8,4 @@ A mobile application aimed to assist users in organizing/placing objects efficie
 
 - Dimensions Measurement Estimation
 - Optimal Arrangement Determination
-- Layout Visuallization
+- Layout Visualization
