@@ -312,17 +312,17 @@ def estimate_measurement(image_path, ref_obj_width_real):
 
 # Example usage
 
-item_dimensions = estimate_measurement("test-images/card-matchbox-1.jpg", 8.56)
-print(item_dimensions)
+# item_dimensions = estimate_measurement("test-images/card-matchbox-1.jpg", 8.56)
+# print(item_dimensions)
 
 # output = apply_blur_with_boxes("test-images/original-laptop.jpg")
 # cv.imshow("Blurred Image", output)
 # cv.waitKey(0)
 # cv.destroyAllWindows()
 
-# for file_name in os.listdir(IMAGES_DIRECTORY):
+for file_name in os.listdir(IMAGES_DIRECTORY):
 
-#     # if file_name.lower().startswith("original-"):
-#     image_path = os.path.join(IMAGES_DIRECTORY, file_name)
+    # if file_name.lower().startswith("original-"):
+    image_path = os.path.join(IMAGES_DIRECTORY, file_name)
 
-#     output = estimate_measurement(image_path, 8.56)
+    output = estimate_measurement(image_path, 8.56)

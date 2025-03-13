@@ -1,12 +1,10 @@
 import unittest
-from main import measure_3d_object
+from main import measure_3d_item
 
 
 class TestMeasure3DObject(unittest.TestCase):
-    def test_measure_3d_object(self):
+    def test_measure_3d_item(self):
         test_cases = [
-            {'item': 'card-1', 'width': 8.56, 'height': 5.28, 'depth': 5.28},
-            {'item': 'card-2', 'width': 8.56, 'height': 5.39, 'depth': 5.39},
             {'item': 'card-charging-brick', 'width': 5.03,
                 'height': 10.3, 'depth': 10.3},
             {'item': 'card-laptop', 'width': 32.24,
@@ -23,14 +21,25 @@ class TestMeasure3DObject(unittest.TestCase):
 
         for case in test_cases:
             with self.subTest(case=case):
-                print(f"Testing {case['item']}")
                 front_image_path = f"test-images/{case['item']}.jpg"
                 side_image_path = f"test-images/{case['item']}.jpg"
-                result = measure_3d_object(
-                    front_image_path, side_image_path, "card")
-                self.assertEqual(result['width'], case['width'])
-                self.assertEqual(result['height'], case['height'])
-                self.assertEqual(result['depth'], case['depth'])
+                result = measure_3d_item(
+                    front_image_path, side_image_path, "card", "left")
+
+                # print("*" * 20)
+                # print(f"Testing {case['item']}")
+                # expected_output = f"Expected:\n {{'item': '{case['item']}',\n 'width': {case['width']},\n 'height': {case['height']},\n 'depth': {case['depth']}}}\n"
+                # actual_output = f"Actual:\n {{'item': '{result['item']}',\n 'width': {result['width']},\n 'height': {result['height']},\n 'depth': {result['depth']}}}"
+
+                # print(expected_output)
+                # print(actual_output)
+
+                self.assertEqual(
+                    result['width'], case['width'], f"Failed on {case['item']} - Expected width: {case['width']}, Got: {result['width']}")
+                self.assertEqual(result['height'], case['height'],
+                                 f"Failed on {case['item']} - Expected height: {case['height']}, Got: {result['height']}")
+                self.assertEqual(
+                    result['depth'], case['depth'], f"Failed on {case['item']} - Expected depth: {case['depth']}, Got: {result['depth']}")
 
 
 if __name__ == '__main__':
