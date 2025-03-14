@@ -35,6 +35,38 @@ LINE_COLOR = (255, 0, 255)
 LINE_THICKNESS = 2
 OUTPUT_WINDOW_NAME = 'Image With Estimated Measurements'
 
+# Testing
+def main():
+    for file_name in os.listdir(IMAGES_DIRECTORY):
+        image_path = os.path.join(IMAGES_DIRECTORY, file_name)
+
+        if image_path.endswith("-1.jpg"):
+            item_dimensions = measure_3d_item(
+                image_path, image_path.replace("-1", "-2"), "card", "left")
+            print(item_dimensions)
+    # item_dimensions = measure_3d_item(
+    #     IMAGES_DIRECTORY + "/card-usb-1.jpg", IMAGES_DIRECTORY + "/card-usb-2.jpg", "card", "left")
+    # print(item_dimensions)
+
+
+'''
+real_measurements_cm = {
+    # Item: Width, Height, Depth
+    "Card": [8.5, 5.3],
+    "Laptop": [32.5, 21.5, 2.0],
+    "Matchbox": [5.8, 4.5, 1.5],
+    "Mouse": [11.8, 5.8, 2.4],
+    "Phone": [7.5, 15.5, 0.8],
+    "USB": [4, 1.2, 0.3],
+    "Tissue Box": [24, 12, 8.5],
+    "Mini Bucket": [16, 16, 15],
+    "Milkpack": [9, 25, 6.2],
+    "2 Coin": [2, 2],
+    "1 Coin": [1.8, 1.8],
+    "5 Coin": [1.6, 1.6],
+}
+'''
+
 
 # Functions
 def resize_image(image, max_width=1920, max_height=1080):
@@ -53,35 +85,25 @@ def resize_image(image, max_width=1920, max_height=1080):
     return cv.resize(image, (w, h), interpolation=cv.INTER_LANCZOS4)
 
 
-def adjust_canny_thresholds(image, upper_threshold=None):
-    if upper_threshold == None:
-        window_name = 'Canny Edge Detection'
-        cv.namedWindow(window_name)
-        cv.createTrackbar('Upper Threshold', window_name,
-                          100, 255, lambda value: value)
-        while True:
-            upper_threshold = cv.getTrackbarPos(
-                'Upper Threshold', window_name)
-            edges_detected = cv.Canny(
-                image, 10, upper_threshold)
-            edges_detected = cv.dilate(
-                edges_detected, CANNY_KERNEL, iterations=CANNY_DILATE_ITERATIONS)
-            edges_detected = cv.erode(
-                edges_detected, CANNY_KERNEL, iterations=CANNY_ERODE_ITERATIONS)
+def detect_edges(image, upper_threshold=None):
+    edges = cv.Canny(image, 10, upper_threshold)
+    edges = cv.dilate(edges, CANNY_KERNEL, iterations=CANNY_DILATE_ITERATIONS)
+    edges = cv.erode(edges, CANNY_KERNEL, iterations=CANNY_ERODE_ITERATIONS)
 
-            cv.imshow(window_name, edges_detected)
-            if cv.waitKey(1) & 0xFF == ord('q'):
-                cv.destroyWindow(window_name)
-                break
-    else:
-        edges_detected = cv.Canny(
-            image, 10, upper_threshold)
-        edges_detected = cv.dilate(
-            edges_detected, CANNY_KERNEL, iterations=CANNY_DILATE_ITERATIONS)
-        edges_detected = cv.erode(
-            edges_detected, CANNY_KERNEL, iterations=CANNY_ERODE_ITERATIONS)
+    return edges
 
-    return edges_detected
+
+def get_sorting_order(ref_obj_pos):
+    if (ref_obj_pos == "left"):
+        return "left-to-right"
+    elif (ref_obj_pos == "right"):
+        return "right-to-left"
+    elif (ref_obj_pos == "top"):
+        return "top-to-bottom"
+    elif (ref_obj_pos == "bottom"):
+        return "bottom-to-top"
+
+    return "left-to-right"
 
 
 def get_two_largest_contours(contour_list):
@@ -140,19 +162,6 @@ def calc_dimensions_real(width_px, height_px, pixels_per_metric):
     real_height = round(height_px / pixels_per_metric, 2)
 
     return real_width, real_height
-
-
-def get_sorting_order(ref_obj_pos):
-    if (ref_obj_pos == "left"):
-        return "left-to-right"
-    elif (ref_obj_pos == "right"):
-        return "right-to-left"
-    elif (ref_obj_pos == "top"):
-        return "top-to-bottom"
-    elif (ref_obj_pos == "bottom"):
-        return "bottom-to-top"
-
-    return "left-to-right"
 
 
 def annotate_image(image, bounding_box, width_real, height_real):
@@ -282,8 +291,7 @@ def get_contours(image):
         blurred_image = cv.GaussianBlur(gray_image, BLUR_SIZE, 0)
 
         # Edge Detection
-        edges_detected = adjust_canny_thresholds(
-            blurred_image, upper_threshold=120)
+        edges_detected = detect_edges(blurred_image, upper_threshold=120)
 
         # Find Contours
         contour_list = cv.findContours(
@@ -347,8 +355,7 @@ def measure_3d_item(front_image_path, side_image_path, ref_obj, ref_obj_pos):
     dimensions.sort(reverse=True)
 
     # The smallest value is the depth
-    width, height = dimensions[0], dimensions[1]
-    depth = dimensions[3]
+    width, height, depth = dimensions[0], dimensions[1], dimensions[3]
 
     # Check if the two largest values come from the same image
     if (dimensions[0] == front_width and dimensions[1] == front_height) or \
@@ -357,39 +364,10 @@ def measure_3d_item(front_image_path, side_image_path, ref_obj, ref_obj_pos):
     else:
         width, height = dimensions[0], dimensions[2]
 
-    item_name = front_image_path.split("/")[-1].split(".")[0]
+    item_name = front_image_path.split("/")[-1].split(".")[0].rsplit("-", 1)[0]
 
     return {"item": item_name, "width": width, "height": height, "depth": depth}
 
 
-# Testing
 if __name__ == "__main__":
-    for file_name in os.listdir(IMAGES_DIRECTORY):
-        image_path = os.path.join(IMAGES_DIRECTORY, file_name)
-
-        if image_path.endswith("-1.jpg"):
-            item_dimensions = measure_3d_item(
-                image_path, image_path.replace("-1", "-2"), "card", "left")
-            print(item_dimensions)
-    # item_dimensions = measure_3d_item(
-    #     IMAGES_DIRECTORY + "/card-usb-1.jpg", IMAGES_DIRECTORY + "/card-usb-2.jpg", "card", "left")
-    # print(item_dimensions)
-
-
-'''
-real_measurements_cm = {
-    # Item: Width, Height, Depth
-    "Card": [8.5, 5.3],
-    "Laptop": [32.5, 21.5, 2.0],
-    "Matchbox": [5.8, 4.5, 1.5],
-    "Mouse": [11.8, 5.8, 2.4],
-    "Phone": [7.5, 15.5, 0.8],
-    "USB": [4, 1.2, 0.3],
-    "Tissue Box": [24, 12, 8.5],
-    "Mini Bucket": [16, 16, 15],
-    "Milkpack": [9, 25, 6.2],
-    "2 Coin": [2, 2],
-    "1 Coin": [1.8, 1.8],
-    "5 Coin": [1.6, 1.6],
-}
-'''
+    main()
