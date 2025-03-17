@@ -16,7 +16,7 @@ class TestMeasure3DItem(unittest.TestCase):
 
         for case in test_cases:
             with self.subTest(case=case):
-                image_path = f"test-images/{case['item']}.jpg"
+                image_path = f"../test-images/{case['item']}.jpg"
                 result = measure_2d_item(image_path, "left", 8.56)
 
                 self.assertEqual(
@@ -32,8 +32,8 @@ class TestMeasure3DItem(unittest.TestCase):
 
         for case in test_cases:
             with self.subTest(case=case):
-                front_image_path = f"test-images/{case['item']}-1.jpg"
-                side_image_path = f"test-images/{case['item']}-2.jpg"
+                front_image_path = f"../test-images/{case['item']}-1.jpg"
+                side_image_path = f"../test-images/{case['item']}-2.jpg"
                 result = measure_3d_item(
                     front_image_path, side_image_path, "card", "left")
 

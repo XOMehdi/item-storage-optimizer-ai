@@ -43,7 +43,6 @@ def calculate_accuracy(measured_values, real_measurements_list):
     return accuracies
 
 
-# Example usage:
 real_measurements_cm = [
     {'item': 'card', 'width': 8.5, 'height': 5.3, 'depth': 0.5},
     {'item': 'card-laptop', 'width': 32.5, 'height': 21.5, 'depth': 21.5},
@@ -60,11 +59,11 @@ real_measurements_cm = [
     {'item': 'coin-5', 'width': 1.6, 'height': 1.6, 'depth': 1.6}
 ]
 
-IMAGES_DIRECTORY = "test-images"
+IMAGES_DIRECTORY = "../test-images"
 measured_values = {}
 
 for file_name in os.listdir(IMAGES_DIRECTORY):
-    if not file_name.endswith(('.jpg', '.png', '.jpeg')):  # Ensure it's an image file
+    if not file_name.endswith(('.jpg', '.png', '.jpeg')):
         continue
 
     image_path = os.path.join(IMAGES_DIRECTORY, file_name)

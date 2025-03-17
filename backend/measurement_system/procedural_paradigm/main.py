@@ -13,7 +13,7 @@ current_polygon = []
 polygon_complete = False
 
 # Constants
-IMAGES_DIRECTORY = "test-images"
+IMAGES_DIRECTORY = "../test-images"
 MEASURE_UNIT = "cm"
 REFERENCE_OBJECTS = {
     "card": {"cm": 8.56, "in": 3.37},
