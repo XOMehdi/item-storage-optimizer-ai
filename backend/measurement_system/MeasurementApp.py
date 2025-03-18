@@ -14,11 +14,12 @@ class MeasurementApp:
         for file_name in os.listdir(Config.IMAGES_DIRECTORY):
             image_path = os.path.join(Config.IMAGES_DIRECTORY, file_name)
 
+            print(image_path)
             if image_path.endswith("-1.jpg"):
                 item_dimensions = self.measurement_system.measure_3d_item(
                     image_path,
                     image_path.replace("-1", "-2"),
-                    "card",
-                    "left"
+                    "left",
+                    8.56
                 )
                 print(item_dimensions)

@@ -7,11 +7,7 @@ class Config:
 
     IMAGES_DIRECTORY = "test-images"
     MEASURE_UNIT = "cm"
-    REFERENCE_OBJECTS = {
-        "card": {"cm": 8.56, "in": 3.37},
-        "coin": {"cm": 2.42, "in": 0.95},
-    }
-    MANUAL_SELECTION = True
+    MANUAL_SELECTION = False
     DISPLAY_OUTPUT_WINDOW = True  # Will be updated based on MANUAL_SELECTION
     BLUR_SIZE = (7, 7)
     CANNY_KERNEL = np.ones((3, 3), np.uint8)
@@ -29,4 +25,4 @@ class Config:
 
     @classmethod
     def initialize(cls):
-        cls.DISPLAY_OUTPUT_WINDOW = True if cls.MANUAL_SELECTION else False
+        cls.DISPLAY_OUTPUT_WINDOW = True if cls.MANUAL_SELECTION else True

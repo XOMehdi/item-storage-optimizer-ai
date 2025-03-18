@@ -51,9 +51,7 @@ class MeasurementSystem:
             cv.waitKey(0)
             cv.destroyAllWindows()
 
-    def measure_3d_item(self, front_image_path, side_image_path, ref_obj, ref_obj_pos):
-        ref_obj_width_real = Config.REFERENCE_OBJECTS[ref_obj][Config.MEASURE_UNIT]
-
+    def measure_3d_item(self, front_image_path, side_image_path, ref_obj_pos, ref_obj_width_real):
         front_measurements = self.measure_2d_item(
             front_image_path, ref_obj_pos, ref_obj_width_real)
         side_measurements = self.measure_2d_item(
