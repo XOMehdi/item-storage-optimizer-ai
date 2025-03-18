@@ -30,3 +30,26 @@ class ImageProcessor:
                          iterations=Config.CANNY_ERODE_ITERATIONS)
 
         return edges
+
+    @staticmethod
+    def decode_base64_image(base64_string):
+        """Decode base64 string to OpenCV image."""
+        # Decode the base64 string
+        img_data = base64.b64decode(base64_string)
+        # Convert to numpy array
+        nparr = np.frombuffer(img_data, np.uint8)
+        # Decode image
+        img = cv.imdecode(nparr, cv.IMREAD_COLOR)
+        return img
+
+    @staticmethod
+    def encode_image_to_base64(image):
+        """Encode OpenCV image to base64 string."""
+        # Convert image to PIL format
+        img_pil = Image.fromarray(cv.cvtColor(image, cv.COLOR_BGR2RGB))
+        # Save to buffer
+        buffer = io.BytesIO()
+        img_pil.save(buffer, format="JPEG")
+        # Encode to base64
+        img_str = base64.b64encode(buffer.getvalue()).decode('utf-8')
+        return img_str

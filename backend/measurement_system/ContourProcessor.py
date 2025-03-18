@@ -48,10 +48,10 @@ class ContourProcessor:
         return ref_obj_contour, obj_contour
 
     @staticmethod
-    def get_contours(image):
-        if Config.MANUAL_SELECTION:
+    def get_contours(image, polygons=None):
+        if polygons:
             selector = ManualContourSelector()
-            return selector.get_manual_contours(image)
+            return selector.set_polygons_from_flutter(polygons)
         else:
             gray_image = cv.cvtColor(image, cv.COLOR_BGR2GRAY)
             blurred_image = cv.GaussianBlur(gray_image, Config.BLUR_SIZE, 0)
