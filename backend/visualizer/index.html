@@ -9,17 +9,52 @@
   <script defer src="main.js"></script>
 </head>
 <body>
+  <!-- Loading screen -->
+  <div id="loading">
+    <div id="loading-spinner"></div>
+    <div>Loading visualization...</div>
+  </div>
+
   <div id="info">
-    <div>Items loaded: <span id="itemCount">0</span></div>
-    <div>Current item: <span id="currentItem">0</span></div>
+    <div>Items: <span id="itemCount">0</span></div>
+    <div>Current: <span id="currentItem">0</span></div>
   </div>
+
+  <div id="help-overlay">
+    <button id="help-button">?</button>
+    <div id="help-content">
+      <h3 style="margin-top: 0;">Touch Controls</h3>
+      <div class="help-row">
+        <div class="gesture-icon">☝️</div>
+        <div>One finger drag to rotate</div>
+      </div>
+      <div class="help-row">
+        <div class="gesture-icon">👆👆</div>
+        <div>Two finger pinch to zoom</div>
+      </div>
+      <div class="help-row">
+        <div class="gesture-icon">👆👆</div>
+        <div>Two finger drag to pan</div>
+      </div>
+      <div class="help-row">
+        <div class="gesture-icon">▶️</div>
+        <div>Play animation</div>
+      </div>
+      <div class="help-row">
+        <div class="gesture-icon">⏸️</div>
+        <div>Pause animation</div>
+      </div>
+      <div class="help-row">
+        <div class="gesture-icon">⏮️</div>
+        <div>Reset animation</div>
+      </div>
+    </div>
+  </div>
+
   <div id="controls">
-    <button onclick="window.play()">Play</button>
-    <button onclick="window.pause()">Pause</button>
-    <button onclick="window.rewind()">Rewind</button>
+    <button class="control-button" id="rewind-button">⏮️</button>
+    <button class="control-button" id="play-button">▶️</button>
+    <button class="control-button" id="pause-button">⏸️</button>
   </div>
-  <script>
-   
-  </script>
 </body>
 </html>

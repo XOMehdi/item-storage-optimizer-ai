@@ -1,199 +1,271 @@
-// Make sure THREE is fully loaded before using it
-document.addEventListener('DOMContentLoaded', function() {
-    // OrbitControls implementation
-    class OrbitControls {
+// Mobile Touch Controls Implementation
+class TouchControls {
     constructor(camera, domElement) {
         this.camera = camera;
         this.domElement = domElement;
         this.enabled = true;
-        this.target = new THREE.Vector3();
-        
+        this.target = new THREE.Vector3(20, 20, 20); // Center of the container
+
         // Current position in spherical coordinates
         this.spherical = new THREE.Spherical();
         this.sphericalDelta = new THREE.Spherical();
-        
-        // Limits
-        this.minDistance = 0;
-        this.maxDistance = Infinity;
-        
-        // Mouse buttons
-        this.mouseButtons = { LEFT: 0 }; // Changed from THREE.MOUSE.ROTATE
-        
-        // State
+
+        // Pan settings
+        this.panOffset = new THREE.Vector3();
+        this.panSpeed = 0.3;
+
+        // Zoom settings
+        this.scale = 1;
+        this.zoomSpeed = 0.1;
+        this.minDistance = 10;
+        this.maxDistance = 200;
+
+        // State tracking
         this.isRotating = false;
-        
+        this.isPanning = false;
+        this.isZooming = false;
+        this.rotateStart = { x: 0, y: 0 };
+        this.rotateEnd = { x: 0, y: 0 };
+        this.panStart = { x: 0, y: 0 };
+        this.panEnd = { x: 0, y: 0 };
+        this.zoomDistStart = 0;
+
         // Bind event handlers
-        this.onMouseDown = this.onMouseDown.bind(this);
-        this.onMouseMove = this.onMouseMove.bind(this);
-        this.onMouseUp = this.onMouseUp.bind(this);
-        this.onMouseWheel = this.onMouseWheel.bind(this);
-        
+        this.onTouchStart = this.onTouchStart.bind(this);
+        this.onTouchMove = this.onTouchMove.bind(this);
+        this.onTouchEnd = this.onTouchEnd.bind(this);
+
         // Add event listeners
-        this.domElement.addEventListener('mousedown', this.onMouseDown);
-        this.domElement.addEventListener('mousemove', this.onMouseMove);
-        this.domElement.addEventListener('mouseup', this.onMouseUp);
-        this.domElement.addEventListener('wheel', this.onMouseWheel);
-        
-        this.update();
+        this.domElement.addEventListener('touchstart', this.onTouchStart, false);
+        this.domElement.addEventListener('touchmove', this.onTouchMove, false);
+        this.domElement.addEventListener('touchend', this.onTouchEnd, false);
+
+        // Initialize spherical coordinates
+        this.updateSpherical();
     }
-    
-    getZoomScale() {
-        return 0.95;
+
+    updateSpherical() {
+        const offset = this.camera.position.clone().sub(this.target);
+        this.spherical.setFromVector3(offset);
     }
-    
-    rotateLeft(angle) {
-        this.sphericalDelta.theta -= angle;
-    }
-    
-    rotateUp(angle) {
-        this.sphericalDelta.phi -= angle;
-    }
-    
-    onMouseDown(event) {
+
+    onTouchStart(event) {
         if (!this.enabled) return;
-        
-        if (event.button === 0) {
-        this.isRotating = true;
-        this.rotateStart = {
-            x: event.clientX,
-            y: event.clientY
-        };
-        }
-    }
-    
-    onMouseMove(event) {
-        if (!this.enabled || !this.isRotating) return;
-        
-        const element = this.domElement;
-        const rotateEnd = {
-        x: event.clientX,
-        y: event.clientY
-        };
-        
-        const rotateDelta = {
-        x: rotateEnd.x - this.rotateStart.x,
-        y: rotateEnd.y - this.rotateStart.y
-        };
-        
-        // Rotating across the whole screen goes 360 degrees around
-        this.rotateLeft(2 * Math.PI * rotateDelta.x / element.clientWidth);
-        
-        // Rotating up and down along the screen
-        this.rotateUp(2 * Math.PI * rotateDelta.y / element.clientHeight);
-        
-        this.rotateStart = rotateEnd;
-        
-        this.update();
-    }
-    
-    onMouseUp() {
-        this.isRotating = false;
-    }
-    
-    onMouseWheel(event) {
-        if (!this.enabled) return;
-        
         event.preventDefault();
-        
-        // Zoom in or out
-        if (event.deltaY < 0) {
-        this.dollyIn(this.getZoomScale());
-        } else if (event.deltaY > 0) {
-        this.dollyOut(this.getZoomScale());
+
+        switch (event.touches.length) {
+            case 1: // Single touch - rotate
+                this.isRotating = true;
+                this.rotateStart.x = event.touches[0].pageX;
+                this.rotateStart.y = event.touches[0].pageY;
+                break;
+
+            case 2: // Two touches - pan or zoom
+                const dx = event.touches[0].pageX - event.touches[1].pageX;
+                const dy = event.touches[0].pageY - event.touches[1].pageY;
+                this.zoomDistStart = Math.sqrt(dx * dx + dy * dy);
+
+                // Set up for panning
+                this.isPanning = true;
+                this.panStart.x = (event.touches[0].pageX + event.touches[1].pageX) / 2;
+                this.panStart.y = (event.touches[0].pageY + event.touches[1].pageY) / 2;
+
+                // Also set up for zooming
+                this.isZooming = true;
+                break;
         }
-        
-        this.update();
     }
-    
-    dollyIn(dollyScale) {
-        this.spherical.radius /= dollyScale;
-        this.spherical.radius = Math.max(this.minDistance, Math.min(this.maxDistance, this.spherical.radius));
+
+    onTouchMove(event) {
+        if (!this.enabled) return;
+        event.preventDefault();
+
+        if (this.isRotating && event.touches.length === 1) {
+            // Handle rotation
+            this.rotateEnd.x = event.touches[0].pageX;
+            this.rotateEnd.y = event.touches[0].pageY;
+
+            // Calculate rotation
+            const rotateDelta = {
+                x: this.rotateEnd.x - this.rotateStart.x,
+                y: this.rotateEnd.y - this.rotateStart.y
+            };
+
+            // Adjust rotation speed
+            const rotateSpeed = 0.003;
+
+            // Apply rotation
+            this.sphericalDelta.theta -= rotateDelta.x * rotateSpeed;
+            this.sphericalDelta.phi -= rotateDelta.y * rotateSpeed;
+
+            // Update start position for next frame
+            this.rotateStart.x = this.rotateEnd.x;
+            this.rotateStart.y = this.rotateEnd.y;
+
+            this.update();
+        } else if (event.touches.length === 2) {
+            // Handle zooming
+            if (this.isZooming) {
+                const dx = event.touches[0].pageX - event.touches[1].pageX;
+                const dy = event.touches[0].pageY - event.touches[1].pageY;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+
+                const ratio = distance / this.zoomDistStart;
+                this.dolly(ratio);
+
+                // Update the start distance for next frame
+                this.zoomDistStart = distance;
+            }
+
+            // Handle panning
+            if (this.isPanning) {
+                this.panEnd.x = (event.touches[0].pageX + event.touches[1].pageX) / 2;
+                this.panEnd.y = (event.touches[0].pageY + event.touches[1].pageY) / 2;
+
+                const panDelta = {
+                    x: this.panEnd.x - this.panStart.x,
+                    y: this.panEnd.y - this.panStart.y
+                };
+
+                this.pan(panDelta.x, panDelta.y);
+
+                // Update start position for next frame
+                this.panStart.x = this.panEnd.x;
+                this.panStart.y = this.panEnd.y;
+            }
+
+            this.update();
+        }
     }
-    
-    dollyOut(dollyScale) {
-        this.spherical.radius *= dollyScale;
-        this.spherical.radius = Math.max(this.minDistance, Math.min(this.maxDistance, this.spherical.radius));
+
+    onTouchEnd(event) {
+        this.isRotating = false;
+        this.isPanning = false;
+        this.isZooming = false;
     }
-    
+
+    pan(deltaX, deltaY) {
+        const offset = new THREE.Vector3();
+        const element = this.domElement;
+
+        // Calculate how far you're panning based on screen width/height
+        offset.x = -2 * deltaX * this.panSpeed / element.clientWidth;
+        offset.y = 2 * deltaY * this.panSpeed / element.clientHeight;
+
+        // Apply to pan offset
+        this.panOffset.add(offset);
+    }
+
+    dolly(dollyScale) {
+        if (dollyScale > 1) {
+            this.scale /= dollyScale;
+        } else {
+            this.scale *= 1 / dollyScale;
+        }
+    }
+
     update() {
         const position = this.camera.position;
         const offset = position.clone().sub(this.target);
-        
+
+        // Apply panning
+        if (this.panOffset.lengthSq() > 0) {
+            // Need to adjust pan direction based on current camera rotation
+            const rotMatrix = new THREE.Matrix4().extractRotation(this.camera.matrix);
+            const pan = new THREE.Vector3(this.panOffset.x, this.panOffset.y, 0);
+            pan.applyMatrix4(rotMatrix);
+            this.target.add(pan);
+            position.add(pan);
+            this.panOffset.set(0, 0, 0);
+        }
+
         // Convert to spherical coordinates
         this.spherical.setFromVector3(offset);
-        
+
+        // Apply zoom
+        if (this.scale !== 1) {
+            this.spherical.radius /= this.scale;
+            this.scale = 1;
+        }
+
+        // Clamp zoom distance
+        this.spherical.radius = Math.max(this.minDistance, Math.min(this.maxDistance, this.spherical.radius));
+
         // Apply rotation
         this.spherical.theta += this.sphericalDelta.theta;
         this.spherical.phi += this.sphericalDelta.phi;
-        
+
         // Restrict phi to between 0.1 and PI - 0.1
         this.spherical.phi = Math.max(0.1, Math.min(Math.PI - 0.1, this.spherical.phi));
         this.spherical.makeSafe();
-        
+
         // Update position
         offset.setFromSpherical(this.spherical);
         position.copy(this.target).add(offset);
-        
+
         this.camera.lookAt(this.target);
-        
+
         // Reset deltas
         this.sphericalDelta.set(0, 0, 0);
-        
+
         return true;
     }
-    }
+}
 
-    // Initialize scene, camera, and renderer
-    const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0xf0f0f0);
-    const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
-    camera.position.set(50, 50, 50);
-    const renderer = new THREE.WebGLRenderer({ antialias: true });
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    document.body.appendChild(renderer.domElement);
-    
-    // Controls
-    const controls = new OrbitControls(camera, renderer.domElement);
-    controls.target = new THREE.Vector3(20, 20, 20); // Center the view on the container
-    controls.update();
-    
-    // Lighting
-    const light = new THREE.AmbientLight(0xffffff, 0.8);
-    scene.add(light);
-    const directional = new THREE.DirectionalLight(0xffffff, 0.8);
-    directional.position.set(10, 20, 10);
-    scene.add(directional);
-    
-    // Container wireframe
-    const container = new THREE.BoxGeometry(40, 40, 40);
-    const wireframe = new THREE.EdgesGeometry(container);
-    const lineMaterial = new THREE.LineBasicMaterial({ color: 0x333333 });
-    const boxOutline = new THREE.LineSegments(wireframe, lineMaterial);
-    boxOutline.position.set(20, 20, 20); // Center the container
-    scene.add(boxOutline);
-    
-    // Get data from URL
-    const urlParams = new URLSearchParams(window.location.search);
-    let items = [];
-    try {
+// Initialize scene, camera, and renderer
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0xf0f0f0);
+const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+camera.position.set(50, 50, 50);
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setPixelRatio(window.devicePixelRatio);
+document.body.appendChild(renderer.domElement);
+
+// Controls
+const controls = new TouchControls(camera, renderer.domElement);
+
+// Lighting
+const light = new THREE.AmbientLight(0xffffff, 0.6);
+scene.add(light);
+const directional = new THREE.DirectionalLight(0xffffff, 0.8);
+directional.position.set(20, 40, 30);
+scene.add(directional);
+
+// Container wireframe
+const container = new THREE.BoxGeometry(40, 40, 40);
+const wireframe = new THREE.EdgesGeometry(container);
+const lineMaterial = new THREE.LineBasicMaterial({ color: 0x333333 });
+const boxOutline = new THREE.LineSegments(wireframe, lineMaterial);
+boxOutline.position.set(20, 20, 20); // Center the container
+scene.add(boxOutline);
+
+// Get data from URL
+const urlParams = new URLSearchParams(window.location.search);
+let items = [];
+try {
     const dataParam = urlParams.get("data");
     if (dataParam) {
         // Try to parse as direct JSON
         try {
-        items = JSON.parse(dataParam);
+            items = JSON.parse(dataParam);
         } catch (e) {
-        // If that fails, try to decode it first (for encoded URLs)
-        items = JSON.parse(decodeURIComponent(dataParam));
+            // If that fails, try to decode it first (for encoded URLs)
+            try {
+                items = JSON.parse(decodeURIComponent(dataParam));
+            } catch (e2) {
+                console.error("Failed to parse data after decoding", e2);
+            }
         }
     }
     document.getElementById('itemCount').textContent = items.length;
-    } catch (e) {
+} catch (e) {
     console.error("Failed to parse query data", e);
-    document.getElementById('itemCount').textContent = "Error parsing data";
-    }
-    
-    // Create colored materials for boxes
-    const colors = [
+    document.getElementById('itemCount').textContent = "Error";
+}
+
+// Create colored materials for boxes
+const colors = [
     0x3498db, // Blue
     0xe74c3c, // Red
     0x2ecc71, // Green
@@ -202,83 +274,113 @@ document.addEventListener('DOMContentLoaded', function() {
     0x1abc9c, // Teal
     0xd35400, // Dark Orange
     0x34495e  // Dark Blue
-    ];
-    
-    let meshes = [];
-    
-    // Create box meshes
-    for (let i = 0; i < items.length; i++) {
+];
+
+let meshes = [];
+
+// Create box meshes
+for (let i = 0; i < items.length; i++) {
     const item = items[i];
-    if (item.length < 6) continue; // Skip invalid items
-    
+    if (!item || item.length < 6) continue; // Skip invalid items
+
     const [x, y, z, w, h, d] = item;
     const geometry = new THREE.BoxGeometry(w, h, d);
-    
+
     // Use a different color for each box
     const colorIndex = i % colors.length;
-    const material = new THREE.MeshStandardMaterial({ 
+    const material = new THREE.MeshStandardMaterial({
         color: colors[colorIndex],
         transparent: true,
-        opacity: 0.8
+        opacity: 0.85
     });
-    
+
     const mesh = new THREE.Mesh(geometry, material);
-    mesh.position.set(x + w/2, y + h/2, z + d/2);
+    mesh.position.set(x + w / 2, y + h / 2, z + d / 2);
     mesh.visible = false;
     scene.add(mesh);
     meshes.push(mesh);
-    }
-    
-    // Animation controls
-    let currentIndex = 0;
-    let isPlaying = false;
-    let interval;
-    
-    function updateCounter() {
-    document.getElementById('currentItem').textContent = 
+}
+
+// Animation controls
+let currentIndex = 0;
+let isPlaying = false;
+let interval;
+const animationSpeed = 300; // milliseconds between box appearances
+
+function updateCounter() {
+    document.getElementById('currentItem').textContent =
         currentIndex + " / " + meshes.length;
-    }
-    
-    window.play = function() {
+}
+
+function play() {
     if (isPlaying || currentIndex >= meshes.length) return;
     isPlaying = true;
+    document.getElementById('play-button').style.backgroundColor = '#d4f7d4'; // Light green
+    document.getElementById('pause-button').style.backgroundColor = '';
     interval = setInterval(() => {
         if (currentIndex < meshes.length) {
-        meshes[currentIndex].visible = true;
-        currentIndex++;
-        updateCounter();
+            meshes[currentIndex].visible = true;
+            currentIndex++;
+            updateCounter();
         } else {
-        pause();
+            pause();
         }
-    }, 700);
-    }
-    
-    window.pause = function() {
+    }, animationSpeed);
+}
+
+function pause() {
     isPlaying = false;
     clearInterval(interval);
-    }
-    
-    window.rewind = function() {
-    window.pause();
+    document.getElementById('play-button').style.backgroundColor = '';
+    document.getElementById('pause-button').style.backgroundColor = '#f7d4d4'; // Light red
+}
+
+function rewind() {
+    pause();
     for (let mesh of meshes) mesh.visible = false;
     currentIndex = 0;
     updateCounter();
+    document.getElementById('pause-button').style.backgroundColor = '';
+    document.getElementById('rewind-button').style.backgroundColor = '#d4d4f7'; // Light blue
+    setTimeout(() => {
+        document.getElementById('rewind-button').style.backgroundColor = '';
+    }, 300);
+}
+
+// Wire up the control buttons
+document.getElementById('play-button').addEventListener('click', play);
+document.getElementById('pause-button').addEventListener('click', pause);
+document.getElementById('rewind-button').addEventListener('click', rewind);
+
+// Help button toggle
+document.getElementById('help-button').addEventListener('click', function () {
+    const helpContent = document.getElementById('help-content');
+    if (helpContent.style.display === 'block') {
+        helpContent.style.display = 'none';
+    } else {
+        helpContent.style.display = 'block';
     }
-    
-    // Initialize counter
-    updateCounter();
-    
-    // Animation loop
-    function animate() {
+});
+
+// Initialize counter
+updateCounter();
+
+// Animation loop
+function animate() {
     requestAnimationFrame(animate);
+    controls.update();
     renderer.render(scene, camera);
-    }
-    animate();
-    
-    // Handle window resize
-    window.addEventListener('resize', () => {
+}
+animate();
+
+// Handle window resize
+window.addEventListener('resize', () => {
     camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
     renderer.setSize(window.innerWidth, window.innerHeight);
-    });
 });
+
+// Remove loading screen when everything is ready
+setTimeout(() => {
+    document.getElementById('loading').style.display = 'none';
+}, 500);
