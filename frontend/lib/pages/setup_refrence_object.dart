@@ -5,7 +5,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:gal/gal.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'Preferences.dart';
+import 'preferences.dart';
 
 class SetupReferenceObject extends StatefulWidget {
   @override

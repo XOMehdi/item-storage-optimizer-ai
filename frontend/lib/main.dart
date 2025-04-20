@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'pages/home.dart';
 import 'pages/scan_items.dart';
 import 'pages/scan_storage_space.dart';
-import 'pages/Preferences.dart';
+import 'pages/preferences.dart';
 import 'pages/setup_refrence_object.dart';
 import 'pages/visualizer_page.dart';
 
