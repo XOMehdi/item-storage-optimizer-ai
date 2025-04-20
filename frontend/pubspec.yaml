@@ -35,7 +35,7 @@ dependencies:
   image_picker: ^1.1.2
   image: ^3.0.2
   http: ^1.0.0
-
+  webview_flutter: ^4.2.2
   tutorial_coach_mark: ^1.2.9
 
   # The following adds the Cupertino Icons font to your application.
