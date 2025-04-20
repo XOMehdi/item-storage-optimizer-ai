@@ -59,7 +59,7 @@ class MyApp extends StatelessWidget {
         '/setupReferenceObject': (context) => SetupReferenceObject(),
         '/scanItems': (context) => ScanItemsPage(),
         '/scanStorageSpace': (context) => ScanStorageSpacePage(),
-        '/Preferences': (context) => PreferencesPage(),
+        '/preferences': (context) => PreferencesPage(),
       },
     );
   }

@@ -19,7 +19,7 @@ class _HomePageState extends State<HomePage> {
     //  'Measure Item': '/measureItem',
     'Scan Item': '/scanItems',
     'Scan Storage Space': '/scanStorageSpace',
-    'Preferences': '/Preferences',
+    'Preferences': '/preferences',
   };
 
   late TutorialCoachMark tutorialCoachMark;
