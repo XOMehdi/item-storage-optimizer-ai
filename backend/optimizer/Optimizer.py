@@ -47,14 +47,15 @@ class Optimizer:
 
     def fitness(self, container, arrangement):
         """Evaluate the fitness of a packing arrangement with early stopping."""
-        # We'll reuse a container object instead of deep copying each time
+
+        all_placed = False
         temp_container = Container(container.w, container.h, container.d)
         total_volume = container.w * container.h * container.d
         total_items_volume = sum(item.volume for item, _ in arrangement)
 
         # If total items volume is too large, fail early
         if total_items_volume > total_volume:
-            return 0, []
+            return 0, [], all_placed
 
         placements = []
         total_placed_volume = 0
@@ -63,7 +64,6 @@ class Optimizer:
             placed = False
 
             # Try to place the item at lowest coordinates first (bottom-left-front strategy)
-            # This is a common heuristic in bin packing
             candidates = []
 
             # First try corners and edges where items are already placed
@@ -130,13 +130,12 @@ class Optimizer:
 
             # If still not placed, return failure
             if not placed:
-                # Quick estimate of utilization
                 utilization = (total_placed_volume / total_volume) * 100
-                return utilization, placements
+                return utilization, placements, all_placed
 
-        # Calculate actual utilization
+        all_placed = True
         utilization = (total_placed_volume / total_volume) * 100
-        return utilization, placements
+        return utilization, placements, all_placed
 
 
     def tournament_selection(self, evaluated_population, tournament_size=3):
@@ -199,6 +198,7 @@ class Optimizer:
         best_solution = None
         best_utilization = 0
         best_placements = []
+        best_all_placed = False
 
         # Track progress to detect stagnation
         stagnation_counter = 0
@@ -211,16 +211,17 @@ class Optimizer:
             # Evaluate population in parallel if possible
             evaluated_population = []
             for individual in population:
-                fitness_value, placement = self.fitness(
+                fitness_value, placement, all_placed = self.fitness(
                     self.container, individual)
                 evaluated_population.append(
-                    ((fitness_value, placement), individual))
+                    ((fitness_value, placement, all_placed), individual))
 
                 # Store results
                 all_results.append(fitness_value)
 
                 # Update best solution
                 if fitness_value > best_utilization:
+                    best_all_placed = True if all_placed else False
                     best_utilization = fitness_value
                     best_solution = individual
                     best_placements = placement
@@ -285,7 +286,7 @@ class Optimizer:
         print(f"Best utilization: {best_utilization:.2f}%")
         print(f"Time taken: {time.time() - start_time:.2f} seconds")
 
-        if best_utilization > 0:
+        if best_solution and best_all_placed:
             return {
                 "status": "success",
                 "placements": best_placements,
@@ -294,5 +295,7 @@ class Optimizer:
         else:
             return {
                 "status": "failure",
-                "message": "No valid packing found. Reduce items"
+                "placements": best_placements,
+                "space_utilization": round(best_utilization, 2),
+                "message": "Not all items could be placed."
             }
