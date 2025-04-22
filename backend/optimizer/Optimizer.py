@@ -57,6 +57,7 @@ class Optimizer:
             return 0, []
 
         placements = []
+        total_placed_volume = 0
 
         for item, (w, h, d) in arrangement:
             placed = False
@@ -80,9 +81,9 @@ class Optimizer:
 
             # Remove duplicates and out-of-bounds positions
             candidates = [(x, y, z) for x, y, z in candidates if
-                          x < container.w - w + 1 and
-                          y < container.h - h + 1 and
-                          z < container.d - d + 1]
+                        x < container.w - w + 1 and
+                        y < container.h - h + 1 and
+                        z < container.d - d + 1]
 
             # Try candidate positions first (much fewer than all positions)
             for x, y, z in candidates:
@@ -90,6 +91,7 @@ class Optimizer:
                     temp_container.place_item(item, x, y, z, w, h, d)
                     placements.append((item.id, x, y, z, w, h, d))
                     placed = True
+                    total_placed_volume += item.volume
                     break
 
             # If no candidate positions work, try a subset of all positions
@@ -100,10 +102,10 @@ class Optimizer:
                     for y in range(0, container.h - h + 1, step):
                         for z in range(0, container.d - d + 1, step):
                             if temp_container.fits(x, y, z, w, h, d):
-                                temp_container.place_item(
-                                    item, x, y, z, w, h, d)
+                                temp_container.place_item(item, x, y, z, w, h, d)
                                 placements.append((item.id, x, y, z, w, h, d))
                                 placed = True
+                                total_placed_volume += item.volume
                                 break
                         if placed:
                             break
@@ -116,24 +118,26 @@ class Optimizer:
                         for y in range(0, container.h - h + 1):
                             for z in range(0, container.d - d + 1):
                                 if temp_container.fits(x, y, z, w, h, d):
-                                    temp_container.place_item(
-                                        item, x, y, z, w, h, d)
-                                    placements.append(
-                                        (item.id, x, y, z, w, h, d))
+                                    temp_container.place_item(item, x, y, z, w, h, d)
+                                    placements.append((item.id, x, y, z, w, h, d))
                                     placed = True
+                                    total_placed_volume += item.volume
                                     break
                             if placed:
                                 break
                         if placed:
                             break
 
-            # If still not placed, return failure - ALL items must be placed
+            # If still not placed, return failure
             if not placed:
-                return 0, []  # Zero fitness if ANY item can't be placed
+                # Quick estimate of utilization
+                utilization = (total_placed_volume / total_volume) * 100
+                return utilization, placements
 
-        # Only calculate actual utilization if ALL items were successfully placed
-        utilization = temp_container.get_utilization()
+        # Calculate actual utilization
+        utilization = (total_placed_volume / total_volume) * 100
         return utilization, placements
+
 
     def tournament_selection(self, evaluated_population, tournament_size=3):
         """Select parents using tournament selection."""
@@ -282,6 +286,13 @@ class Optimizer:
         print(f"Time taken: {time.time() - start_time:.2f} seconds")
 
         if best_utilization > 0:
-            return {"status": "success", "placements": best_placements, "space_utilization": round(best_utilization, 2)}
+            return {
+                "status": "success",
+                "placements": best_placements,
+                "space_utilization": round(best_utilization, 2)
+            }
         else:
-            return {"status": "reduce_items", "message": "No valid packing found."}
+            return {
+                "status": "failure",
+                "message": "No valid packing found. Reduce items"
+            }

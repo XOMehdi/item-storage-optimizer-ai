@@ -58,6 +58,8 @@ def visualize_packing(dimensions, placements):
 
 
 API_URL = "https://optimizer.up.railway.app/optimize"
+# API_URL = "http://127.0.0.1:5000/optimize"
+
 
 # API request payload
 payload = {
@@ -205,7 +207,7 @@ payload = {
         },
     ],
     "config": {
-        "population_size": 30,
+        "population_size": 100,
         "generations": 50
     }
 }
