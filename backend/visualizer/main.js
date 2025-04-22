@@ -233,11 +233,11 @@ directional.position.set(20, 40, 30);
 scene.add(directional);
 
 // Container wireframe
-const container = new THREE.BoxGeometry(40, 40, 40);
+const container = new THREE.BoxGeometry(30, 20, 10);
 const wireframe = new THREE.EdgesGeometry(container);
 const lineMaterial = new THREE.LineBasicMaterial({ color: 0x333333 });
 const boxOutline = new THREE.LineSegments(wireframe, lineMaterial);
-boxOutline.position.set(20, 20, 20); // Center the container
+boxOutline.position.set(20, 20, 20);
 scene.add(boxOutline);
 
 // Get data from URL
@@ -246,11 +246,9 @@ let items = [];
 try {
     const dataParam = urlParams.get("data");
     if (dataParam) {
-        // Try to parse as direct JSON
         try {
             items = JSON.parse(dataParam);
         } catch (e) {
-            // If that fails, try to decode it first (for encoded URLs)
             try {
                 items = JSON.parse(decodeURIComponent(dataParam));
             } catch (e2) {
@@ -264,29 +262,35 @@ try {
     document.getElementById('itemCount').textContent = "Error";
 }
 
-// Create colored materials for boxes
-const colors = [
-    0x3498db, // Blue
-    0xe74c3c, // Red
-    0x2ecc71, // Green
-    0xf39c12, // Orange
-    0x9b59b6, // Purple
-    0x1abc9c, // Teal
-    0xd35400, // Dark Orange
-    0x34495e  // Dark Blue
-];
+// Colors
+const colors = [0x3498db, 0xe74c3c, 0x2ecc71, 0xf39c12, 0x9b59b6, 0x1abc9c, 0xd35400, 0x34495e];
 
 let meshes = [];
+let labels = [];
 
-// Create box meshes
+// Utility to create ID labels
+function createTextSprite(message) {
+    const canvas = document.createElement('canvas');
+    const context = canvas.getContext('2d');
+    const fontSize = 40;
+    context.font = `${fontSize}px Arial`;
+    context.fillStyle = 'black';
+    context.fillText(message, 10, fontSize);
+
+    const texture = new THREE.CanvasTexture(canvas);
+    const spriteMaterial = new THREE.SpriteMaterial({ map: texture, transparent: true });
+    const sprite = new THREE.Sprite(spriteMaterial);
+    sprite.scale.set(10, 5, 1); // Adjust as needed
+    return sprite;
+}
+
+// Create box meshes with labels
 for (let i = 0; i < items.length; i++) {
     const item = items[i];
-    if (!item || item.length < 6) continue; // Skip invalid items
+    if (!item || item.length < 7) continue;
 
-    const [x, y, z, w, h, d] = item;
+    const [id, x, y, z, w, h, d] = item;
     const geometry = new THREE.BoxGeometry(w, h, d);
-
-    // Use a different color for each box
     const colorIndex = i % colors.length;
     const material = new THREE.MeshStandardMaterial({
         color: colors[colorIndex],
@@ -297,29 +301,37 @@ for (let i = 0; i < items.length; i++) {
     const mesh = new THREE.Mesh(geometry, material);
     mesh.position.set(x + w / 2, y + h / 2, z + d / 2);
     mesh.visible = false;
+
+    const label = createTextSprite(id.toString());
+    label.position.set(mesh.position.x, mesh.position.y + h / 2 + 2, mesh.position.z); // Above the box
+    label.visible = false;
+
     scene.add(mesh);
+    scene.add(label);
+
     meshes.push(mesh);
+    labels.push(label);
 }
 
 // Animation controls
 let currentIndex = 0;
 let isPlaying = false;
 let interval;
-const animationSpeed = 300; // milliseconds between box appearances
+const animationSpeed = 300;
 
 function updateCounter() {
-    document.getElementById('currentItem').textContent =
-        currentIndex + " / " + meshes.length;
+    document.getElementById('currentItem').textContent = currentIndex + " / " + meshes.length;
 }
 
 function play() {
     if (isPlaying || currentIndex >= meshes.length) return;
     isPlaying = true;
-    document.getElementById('play-button').style.backgroundColor = '#d4f7d4'; // Light green
+    document.getElementById('play-button').style.backgroundColor = '#d4f7d4';
     document.getElementById('pause-button').style.backgroundColor = '';
     interval = setInterval(() => {
         if (currentIndex < meshes.length) {
             meshes[currentIndex].visible = true;
+            labels[currentIndex].visible = true;
             currentIndex++;
             updateCounter();
         } else {
@@ -332,37 +344,36 @@ function pause() {
     isPlaying = false;
     clearInterval(interval);
     document.getElementById('play-button').style.backgroundColor = '';
-    document.getElementById('pause-button').style.backgroundColor = '#f7d4d4'; // Light red
+    document.getElementById('pause-button').style.backgroundColor = '#f7d4d4';
 }
 
 function rewind() {
     pause();
-    for (let mesh of meshes) mesh.visible = false;
+    for (let i = 0; i < meshes.length; i++) {
+        meshes[i].visible = false;
+        labels[i].visible = false;
+    }
     currentIndex = 0;
     updateCounter();
     document.getElementById('pause-button').style.backgroundColor = '';
-    document.getElementById('rewind-button').style.backgroundColor = '#d4d4f7'; // Light blue
+    document.getElementById('rewind-button').style.backgroundColor = '#d4d4f7';
     setTimeout(() => {
         document.getElementById('rewind-button').style.backgroundColor = '';
     }, 300);
 }
 
-// Wire up the control buttons
+// Buttons
 document.getElementById('play-button').addEventListener('click', play);
 document.getElementById('pause-button').addEventListener('click', pause);
 document.getElementById('rewind-button').addEventListener('click', rewind);
 
-// Help button toggle
+// Help button
 document.getElementById('help-button').addEventListener('click', function () {
     const helpContent = document.getElementById('help-content');
-    if (helpContent.style.display === 'block') {
-        helpContent.style.display = 'none';
-    } else {
-        helpContent.style.display = 'block';
-    }
+    helpContent.style.display = helpContent.style.display === 'block' ? 'none' : 'block';
 });
 
-// Initialize counter
+// Counter
 updateCounter();
 
 // Animation loop
@@ -373,14 +384,14 @@ function animate() {
 }
 animate();
 
-// Handle window resize
+// Window resize
 window.addEventListener('resize', () => {
     camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
     renderer.setSize(window.innerWidth, window.innerHeight);
 });
 
-// Remove loading screen when everything is ready
+// Hide loading
 setTimeout(() => {
     document.getElementById('loading').style.display = 'none';
 }, 500);
