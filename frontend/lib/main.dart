@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
+import 'pages/api_loader_page.dart';
 import 'pages/home.dart';
 import 'pages/scan_items.dart';
 import 'pages/scan_storage_space.dart';
 import 'pages/preferences.dart';
 import 'pages/setup_refrence_object.dart';
-import 'pages/visualizer_page.dart';
-
 
 void main() {
   runApp(const MyApp());
@@ -35,26 +34,7 @@ class MyApp extends StatelessWidget {
           bodyMedium: TextStyle(fontSize: 16, color: Colors.black87),
         ),
       ),
-      // home: HomePage(),
-      home: VisualizerPage(
-        items: [
-          [0, 0, 0, 10, 10, 10],
-          [10, 0, 0, 10, 10, 10],
-          [0, 10, 0, 10, 10, 10],
-          [10, 10, 0, 10, 10, 10],
-          [20, 0, 0, 8, 8, 8],
-          [28, 0, 0, 12, 5, 10],
-          [0, 0, 10, 5, 5, 10],
-          [5, 0, 10, 10, 8, 15],
-          [15, 0, 10, 10, 12, 10],
-          [0, 20, 0, 15, 8, 12],
-          [20, 8, 0, 10, 12, 15],
-          [0, 0, 25, 30, 5, 5],
-          [15, 20, 15, 10, 10, 10],
-          [25, 20, 0, 10, 8, 15],
-          [30, 0, 15, 10, 15, 10]
-        ],
-      ),
+      home: const ApiLoaderPage(),
       routes: {
         '/setupReferenceObject': (context) => SetupReferenceObject(),
         '/scanItems': (context) => ScanItemsPage(),

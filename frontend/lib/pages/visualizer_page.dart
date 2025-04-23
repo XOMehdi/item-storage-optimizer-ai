@@ -3,9 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
 class VisualizerPage extends StatefulWidget {
-  final List<List<num>> items;
+  final List<List<num>> placements;
 
-  const VisualizerPage({super.key, required this.items});
+  const VisualizerPage({super.key, required this.placements});
 
   @override
   State<VisualizerPage> createState() => _VisualizerPageState();
@@ -18,7 +18,7 @@ class _VisualizerPageState extends State<VisualizerPage> {
   void initState() {
     super.initState();
 
-    final visualizerUrl = _generateVisualizerUrl(widget.items);
+    final visualizerUrl = _generateVisualizerUrl(widget.placements);
 
     _controller =
         WebViewController()
@@ -26,8 +26,8 @@ class _VisualizerPageState extends State<VisualizerPage> {
           ..loadRequest(Uri.parse(visualizerUrl));
   }
 
-  String _generateVisualizerUrl(List<List<num>> items) {
-    final encodedData = Uri.encodeComponent(jsonEncode(items));
+  String _generateVisualizerUrl(List<List<num>> placements) {
+    final encodedData = Uri.encodeComponent(jsonEncode(placements));
     return 'https://xomehdi.github.io/item-storage-optimizer-ai/index.html?data=$encodedData';
   }
 
