@@ -4,7 +4,16 @@ class TouchControls {
         this.camera = camera;
         this.domElement = domElement;
         this.enabled = true;
-        this.target = new THREE.Vector3(20, 20, 20); // Center of the container
+        
+        // Calculate center of the container
+        const containerPosition = containerMesh.position.clone();
+        const containerGeometry = containerMesh.geometry;
+        const containerSize = new THREE.Vector3();
+        containerGeometry.computeBoundingBox();
+        containerGeometry.boundingBox.getSize(containerSize);
+        
+        // Set target to the center of the container
+        this.target = containerPosition;
 
         // Current position in spherical coordinates
         this.spherical = new THREE.Spherical();
@@ -222,9 +231,6 @@ renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.setPixelRatio(window.devicePixelRatio);
 document.body.appendChild(renderer.domElement);
 
-// Controls
-const controls = new TouchControls(camera, renderer.domElement);
-
 // Lighting
 const light = new THREE.AmbientLight(0xffffff, 0.6);
 scene.add(light);
@@ -239,6 +245,9 @@ const lineMaterial = new THREE.LineBasicMaterial({ color: 0x333333 });
 const boxOutline = new THREE.LineSegments(wireframe, lineMaterial);
 boxOutline.position.set(20, 20, 20);
 scene.add(boxOutline);
+
+// Controls
+const controls = new TouchControls(camera, renderer.domElement, boxOutline);
 
 // Get data from URL
 const urlParams = new URLSearchParams(window.location.search);
