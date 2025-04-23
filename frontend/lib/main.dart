@@ -34,12 +34,13 @@ class MyApp extends StatelessWidget {
           bodyMedium: TextStyle(fontSize: 16, color: Colors.black87),
         ),
       ),
-      home: const ApiLoaderPage(),
+      home: HomePage(),
       routes: {
         '/setupReferenceObject': (context) => SetupReferenceObject(),
         '/scanItems': (context) => ScanItemsPage(),
         '/scanStorageSpace': (context) => ScanStorageSpacePage(),
         '/preferences': (context) => PreferencesPage(),
+        '/apiLoaderPage': (context) => ApiLoaderPage(),
       },
     );
   }

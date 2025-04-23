@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:camera/camera.dart';
 import 'package:gal/gal.dart';
+import 'api_loader_page.dart';
 
 class ScanStorageSpacePage extends StatefulWidget {
   const ScanStorageSpacePage({super.key});
@@ -106,8 +107,19 @@ class _ScanStorageSpacePageState extends State<ScanStorageSpacePage> {
                                       ),
                                       actions: [
                                         TextButton(
-                                          onPressed:
-                                              () => Navigator.of(context).pop(),
+                                          onPressed: () {
+                                            Navigator.of(
+                                              context,
+                                            ).pop(); // close dialog
+                                            Navigator.push(
+                                              context,
+                                              MaterialPageRoute(
+                                                builder:
+                                                    (context) =>
+                                                        const ApiLoaderPage(),
+                                              ),
+                                            );
+                                          },
                                           child: const Text('OK'),
                                         ),
                                       ],
