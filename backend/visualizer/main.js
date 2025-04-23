@@ -232,24 +232,13 @@ const directional = new THREE.DirectionalLight(0xffffff, 0.8);
 directional.position.set(20, 40, 30);
 scene.add(directional);
 
-// =========================
-// Define container settings
-// =========================
-const containerWidth = 30;
-const containerHeight = 20;
-const containerDepth = 10;
-
-// Optional: container position offset (e.g., center at 0,0,0)
-const containerCenter = new THREE.Vector3(containerWidth / 2, containerHeight / 2, containerDepth / 2);
-
-// Create container box at dynamic size and center
-const containerGeometry = new THREE.BoxGeometry(containerWidth, containerHeight, containerDepth);
-const containerEdges = new THREE.EdgesGeometry(containerGeometry);
-const containerMaterial = new THREE.LineBasicMaterial({ color: 0x333333 });
-const containerMesh = new THREE.LineSegments(containerEdges, containerMaterial);
-containerMesh.position.copy(containerCenter);
-scene.add(containerMesh);
-
+// Container wireframe
+const container = new THREE.BoxGeometry(30, 20, 10);
+const wireframe = new THREE.EdgesGeometry(container);
+const lineMaterial = new THREE.LineBasicMaterial({ color: 0x333333 });
+const boxOutline = new THREE.LineSegments(wireframe, lineMaterial);
+boxOutline.position.set(20, 20, 20);
+scene.add(boxOutline);
 
 // Get data from URL
 const urlParams = new URLSearchParams(window.location.search);
@@ -309,18 +298,24 @@ for (let i = 0; i < items.length; i++) {
         opacity: 0.85
     });
 
+
+    // Add container's position (20, 20, 20) as an offset
+    const containerPos = boxOutline.position;
     const mesh = new THREE.Mesh(geometry, material);
-
-    const offsetX = containerCenter.x;
-    const offsetY = containerCenter.y;
-    const offsetZ = containerCenter.z;
-
-    mesh.position.set(x + w / 2 + offsetX, y + h / 2 + offsetY, z + d / 2 + offsetZ);
-
+    mesh.position.set(
+        containerPos.x + x + w / 2, 
+        containerPos.y + y + h / 2, 
+        containerPos.z + z + d / 2
+    );
     mesh.visible = false;
 
+    // Also update the label position
     const label = createTextSprite(id.toString());
-    label.position.set(mesh.position.x, mesh.position.y + h / 2 + 2, mesh.position.z);
+    label.position.set(
+        mesh.position.x, 
+        mesh.position.y + h / 2 + 2, 
+        mesh.position.z
+    );
     label.visible = false;
 
     scene.add(mesh);
