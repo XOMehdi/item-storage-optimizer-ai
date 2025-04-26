@@ -10,9 +10,10 @@ from ImageAnnotator import *
 class MeasurementSystem:
     """Main class that coordinates the measurement functionality."""
 
-    def __init__(self, ref_obj_pos, ref_obj_width_real, manual_selection_points):
+    def __init__(self, ref_obj_pos, ref_obj_width_real, ref_obj_height_real, manual_selection_points):
         self.ref_obj_pos = ref_obj_pos
         self.ref_obj_width_real = ref_obj_width_real
+        self.ref_obj_height_real = ref_obj_height_real
         self.manual_selection_points = manual_selection_points
 
     def measure_2d_item(self, image, polygons):
@@ -20,7 +21,7 @@ class MeasurementSystem:
         Measure a 2D item from an image.
 
         Args:
-            image: OpenCV image object, not a file path
+            image: OpenCV image object
 
         Returns:
             dict: Measurement results and annotated image
