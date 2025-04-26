@@ -1,6 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:frontend/pages/home.dart';
 import 'preferences.dart';
+
+class ReferenceObject {
+  static final ReferenceObject _instance = ReferenceObject._internal();
+  factory ReferenceObject() => _instance;
+  ReferenceObject._internal();
+
+  String? referenceObjectPosition;
+  double? referenceObjectWidth;
+  double? referenceObjectHeight;
+}
 
 class SetupReferenceObject extends StatefulWidget {
   const SetupReferenceObject({super.key});
@@ -10,7 +21,6 @@ class SetupReferenceObject extends StatefulWidget {
 }
 
 class SetupReferenceObjectState extends State<SetupReferenceObject> {
-  String? _referenceObjectPosition = 'left'; // Default position
   final TextEditingController _widthController = TextEditingController();
   final TextEditingController _heightController = TextEditingController();
 
@@ -48,16 +58,26 @@ class SetupReferenceObjectState extends State<SetupReferenceObject> {
   }
 
   Future<void> _validateInputs() async {
-    if (_referenceObjectPosition == null) {
-      _showErrorDialog('Please set the position of the reference object.');
-      return;
-    }
     if (_widthController.text.isEmpty || _heightController.text.isEmpty) {
       _showErrorDialog(
         'Please enter the real width and height for the reference object.',
       );
       return;
     }
+
+    setState(() {
+      ReferenceObject().referenceObjectWidth = double.parse(
+        _widthController.text,
+      );
+      ReferenceObject().referenceObjectHeight = double.parse(
+        _heightController.text,
+      );
+    });
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const HomePage()),
+    );
   }
 
   void _showErrorDialog(String message) {
@@ -118,15 +138,11 @@ class SetupReferenceObjectState extends State<SetupReferenceObject> {
                 const SizedBox(height: 60),
                 const Text(
                   'Position',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.black87,
-                  ),
+                  style: TextStyle(fontSize: 14, color: Colors.black87),
                 ),
                 SizedBox(
-                  width: 120,
+                  width: 150,
                   child: DropdownButtonFormField<String>(
-                    value: _referenceObjectPosition,
                     decoration: InputDecoration(
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8),
@@ -135,6 +151,8 @@ class SetupReferenceObjectState extends State<SetupReferenceObject> {
                         horizontal: 12,
                         vertical: 8,
                       ),
+                      hintText: 'Select value',
+                      hintStyle: const TextStyle(color: Colors.black38),
                     ),
                     items: const [
                       DropdownMenuItem(value: 'left', child: Text('Left')),
@@ -144,7 +162,7 @@ class SetupReferenceObjectState extends State<SetupReferenceObject> {
                     ],
                     onChanged: (value) {
                       setState(() {
-                        _referenceObjectPosition = value;
+                        ReferenceObject().referenceObjectPosition = value;
                       });
                     },
                   ),

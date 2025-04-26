@@ -6,6 +6,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:gal/gal.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'setup_refrence_object.dart';
 
 class MeasureItem extends StatefulWidget {
   const MeasureItem({super.key});
@@ -16,15 +17,10 @@ class MeasureItem extends StatefulWidget {
 
 class MeasureItemState extends State<MeasureItem> {
   CameraController? _controller;
-  int _currentStep = 1; // 1 for first image, 2 for second image
-  String? _firstImageB64;
-  String? _secondImageB64;
-  String? _firstPosition = 'top';
-  String? _secondPosition = 'top';
-  final TextEditingController _firstWidthController = TextEditingController();
-  final TextEditingController _firstHeightController = TextEditingController();
-  final TextEditingController _secondWidthController = TextEditingController();
-  final TextEditingController _secondHeightController = TextEditingController();
+  String? _imageB64;
+  final String? _refObjPos = ReferenceObject().referenceObjectPosition;
+  final double? _refObjWidthReal = ReferenceObject().referenceObjectWidth;
+  final double? _refObjHeightReal = ReferenceObject().referenceObjectHeight;
 
   @override
   void initState() {
@@ -49,10 +45,6 @@ class MeasureItemState extends State<MeasureItem> {
   @override
   void dispose() {
     _controller?.dispose();
-    _firstWidthController.dispose();
-    _firstHeightController.dispose();
-    _secondWidthController.dispose();
-    _secondHeightController.dispose();
     super.dispose();
   }
 
@@ -94,16 +86,11 @@ class MeasureItemState extends State<MeasureItem> {
         final imageBytes = await image.readAsBytes();
         final imageB64 = base64Encode(imageBytes);
         setState(() {
-          if (_currentStep == 1) {
-            _firstImageB64 = imageB64;
-          } else {
-            _secondImageB64 = imageB64;
-          }
+            _imageB64 = imageB64;
         });
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(
-              '${_currentStep == 1 ? "First" : "Second"} image set.',
+            content: Text('Image is set.',
             ),
           ),
         );
@@ -129,69 +116,22 @@ class MeasureItemState extends State<MeasureItem> {
   }
 
   Future<void> _confirmAction() async {
-    if (_currentStep == 1) {
-      if (_firstImageB64 == null) {
-        _showErrorDialog('Please set the first image.');
-        return;
-      }
-      if (_firstWidthController.text.isEmpty ||
-          _firstHeightController.text.isEmpty) {
-        _showErrorDialog('Please enter width and height for the first image.');
-        return;
-      }
-      setState(() {
-        _currentStep = 2;
-      });
-    } else {
-      if (_secondImageB64 == null) {
-        _showErrorDialog('Please set the second image.');
-        return;
-      }
-      if (_secondWidthController.text.isEmpty ||
-          _secondHeightController.text.isEmpty) {
-        _showErrorDialog('Please enter width and height for the second image.');
+      if (_imageB64 == null) {
+        _showErrorDialog('Please set the image.');
         return;
       }
       await _sendToApi();
-    }
   }
 
   Future<void> _sendToApi() async {
-    final firstWidth = double.tryParse(_firstWidthController.text);
-    final firstHeight = double.tryParse(_firstHeightController.text);
-    final secondWidth = double.tryParse(_secondWidthController.text);
-    final secondHeight = double.tryParse(_secondHeightController.text);
-    if (firstWidth == null ||
-        firstHeight == null ||
-        secondWidth == null ||
-        secondHeight == null) {
-      _showErrorDialog('Please enter valid width and height for both images.');
-      return;
-    }
-
-    String frontImage;
-    String sideImage;
-    String refObjPos;
-
-    if (_firstPosition == 'top' || _firstPosition == 'bottom') {
-      frontImage = _firstImageB64!;
-      sideImage = _secondImageB64!;
-      refObjPos = _firstPosition!;
-    } else if (_secondPosition == 'top' || _secondPosition == 'bottom') {
-      frontImage = _secondImageB64!;
-      sideImage = _firstImageB64!;
-      refObjPos = _secondPosition!;
-    } else {
-      frontImage = _firstImageB64!;
-      sideImage = _secondImageB64!;
-      refObjPos = _firstPosition!;
-    }
+    String image = _imageB64!;
 
     final payload = {
-      "image_b64": frontImage,
-      "ref_obj_pos": refObjPos,
-      "ref_obj_width_real": 8.56,
-      "ref_obj_height_real": 5.39,
+      "image_b64": image,
+      "ref_obj_pos": _refObjPos,
+      "ref_obj_width_real": _refObjWidthReal,
+      "ref_obj_height_real": _refObjHeightReal,
+      "polygons_image": null
     };
 
     try {
@@ -228,15 +168,14 @@ class MeasureItemState extends State<MeasureItem> {
                           Text(
                             'Width: ${result['width']} units\n'
                             'Height: ${result['height']} units\n'
-                            'Depth: ${result['depth']} units',
                           ),
                           const SizedBox(height: 10),
-                          if (result.containsKey('front_annotated_image') &&
-                              result['front_annotated_image'] != null) ...[
-                            const Text('Front Annotated Image:'),
+                          if (result.containsKey('annotated_image') &&
+                              result['annotated_image'] != null) ...[
+                            const Text('Annotated Image:'),
                             const SizedBox(height: 5),
                             Image.memory(
-                              base64Decode(result['front_annotated_image']),
+                              base64Decode(result['annotated_image']),
                               width:
                                   double.infinity, // Take full available width
                               fit: BoxFit.contain, // Maintain aspect ratio
@@ -246,20 +185,6 @@ class MeasureItemState extends State<MeasureItem> {
                             ),
                           ],
                           const SizedBox(height: 10),
-                          if (result.containsKey('side_annotated_image') &&
-                              result['side_annotated_image'] != null) ...[
-                            const Text('Side Annotated Image:'),
-                            const SizedBox(height: 5),
-                            Image.memory(
-                              base64Decode(result['side_annotated_image']),
-                              width:
-                                  double.infinity, // Take full available width
-                              fit: BoxFit.contain, // Maintain aspect ratio
-                              errorBuilder:
-                                  (context, error, stackTrace) =>
-                                      const Text('Failed to load side image'),
-                            ),
-                          ],
                         ],
                       ),
                     ),
@@ -269,9 +194,7 @@ class MeasureItemState extends State<MeasureItem> {
                       onPressed: () {
                         Navigator.of(context).pop();
                         setState(() {
-                          _currentStep = 1;
-                          _firstImageB64 = null;
-                          _secondImageB64 = null;
+                          _imageB64 = null;
                         });
                       },
                       child: const Text('OK'),
@@ -317,10 +240,7 @@ class MeasureItemState extends State<MeasureItem> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              Text(
-                _currentStep == 1
-                    ? 'Step 1: Capture First Image'
-                    : 'Step 2: Capture Second Image',
+              Text('Capture Image',
                 style: const TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
@@ -399,10 +319,7 @@ class MeasureItemState extends State<MeasureItem> {
                     borderRadius: BorderRadius.circular(8),
                   ),
                 ),
-                child: Text(
-                  _currentStep == 1
-                      ? 'Confirm First Image'
-                      : 'Confirm and Process',
+                child: Text('Confirm and Process',
                   style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
