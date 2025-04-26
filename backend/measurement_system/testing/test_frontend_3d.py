@@ -4,6 +4,10 @@ import cv2 as cv
 import numpy as np
 
 
+API_URL = "https://measurementsystem.up.railway.app/measure"
+front_image_path = "images/card-matchbox-1.jpg"
+side_image_path = "images/card-matchbox-2.jpg"
+
 # Global variables for manual selection
 manual_polygons = []
 current_polygon = []
@@ -73,13 +77,6 @@ def get_manual_contours(image_path):
     return [poly.tolist() for poly in manual_polygons[:2]]
 
 
-# Your Railway API URL (replace with actual deployed URL)
-# API_URL = "http://13.60.238.130:5000/measure"
-API_URL = "https://measurementsystemapi.up.railway.app/measure"
-API_URL = "https://measurementsystem.up.railway.app/measure"
-
-
-
 # Function to encode image to base64
 def encode_image(image_path):
     with open(image_path, "rb") as img_file:
@@ -100,11 +97,8 @@ def decode_and_display_image(image_b64, window_name):
         print(f"❌ Error displaying {window_name}")
 
 
-# Example image paths (update with actual paths)
-front_image_path = "images/card-matchbox-1.jpg"
-side_image_path = "images/card-matchbox-2.jpg"
-polygon1 = get_manual_contours("images/card-matchbox-1.jpg")
-polygon2 = get_manual_contours("images/card-matchbox-2.jpg")
+polygons_front_image = get_manual_contours(front_image_path)
+polygons_side_image = get_manual_contours(side_image_path)
 
 
 # Convert images to base64
@@ -113,12 +107,13 @@ side_image_b64 = encode_image(side_image_path)
 
 # API request payload
 payload = {
-    "front_image": front_image_b64,
-    "side_image": side_image_b64,
+    "front_image_b64": front_image_b64,
+    "side_image_b64": side_image_b64,
     "ref_obj_pos": "left",
     "ref_obj_width_real": 8.56,
-    "polygons_front_image": polygon1,
-    "polygons_side_image": polygon2
+    "ref_obj_height_real": 5.39,
+    "polygons_front_image": polygons_front_image,
+    "polygons_side_image": polygons_side_image
 }
 
 try:
