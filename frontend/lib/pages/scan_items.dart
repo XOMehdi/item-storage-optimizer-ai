@@ -1,12 +1,14 @@
 import 'dart:developer';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:camera/camera.dart';
+import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:image/image.dart' as img;
+import 'preferences.dart';
+import 'setup_refrence_object.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -24,13 +26,16 @@ class ScanItemsPageState extends State<ScanItemsPage> {
   CameraController? _controller;
   bool _isCameraInitialized = false;
   int dimensionCounter = 0;
+  final String? _refObjPos = ReferenceObject().referenceObjectPosition;
+  final double? _refObjWidthReal = ReferenceObject().referenceObjectWidth;
+  final double? _refObjHeightReal = ReferenceObject().referenceObjectHeight;
 
   File? _currentImage;
   Size? _currentImageSize;
   List<List<Offset>> _currentPolygons = [];
   List<Offset> _currentPolygon = [];
   bool isDrawingMode = false;
-  bool drawSelection = true;
+  bool drawSelection = Preferences().drawSelection;
   bool drawPolygonOrNot = false;
 
   List<Map<String, dynamic>> _scannedItems = [];
@@ -66,10 +71,19 @@ class ScanItemsPageState extends State<ScanItemsPage> {
     super.dispose();
   }
 
-  Future<void> _captureImage() async {
+  Future<void> _captureImage(bool isSnapshot) async {
     if (_controller == null || !_controller!.value.isInitialized) return;
     try {
-      final image = await _controller!.takePicture();
+      XFile? image;
+      if (isSnapshot) {
+        image = await _controller!.takePicture();
+      } else {
+        final picker = ImagePicker();
+        image = await picker.pickImage(source: ImageSource.gallery);
+      }
+
+      if (image == null) return;
+
       final file = File(image.path);
       final bytes = await file.readAsBytes();
       final decodedImage = img.decodeImage(bytes);
@@ -206,6 +220,10 @@ class ScanItemsPageState extends State<ScanItemsPage> {
       return;
     }
 
+    await _sendToApi();
+  }
+
+  Future<void> _sendToApi() async {
     // Show loading dialog
     showDialog(
       context: context,
@@ -258,9 +276,9 @@ class ScanItemsPageState extends State<ScanItemsPage> {
       final payload = {
         "front_image_b64": frontB64,
         "side_image_b64": sideB64,
-        "ref_obj_pos": "left",
-        "ref_obj_width_real": 8.56,
-        "ref_obj_height_real": 5.39,
+        "ref_obj_pos": _refObjPos,
+        "ref_obj_width_real": _refObjWidthReal,
+        "ref_obj_height_real": _refObjHeightReal,
         "polygons_front_image": frontPolygonsTransformed,
         "polygons_side_image": sidePolygonsTransformed,
       };
@@ -270,6 +288,8 @@ class ScanItemsPageState extends State<ScanItemsPage> {
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode(payload),
       );
+
+      log('API Response: ${response.body}');
 
       if (mounted) {
         Navigator.pop(context); // Close loading dialog
@@ -635,7 +655,7 @@ class ScanItemsPageState extends State<ScanItemsPage> {
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 8),
                 child: ElevatedButton.icon(
-                  onPressed: _captureImage,
+                  onPressed: () => _captureImage(true),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xff4CAF50),
                     foregroundColor: Colors.white,
@@ -654,6 +674,28 @@ class ScanItemsPageState extends State<ScanItemsPage> {
                   ),
                 ),
               ),
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              child: ElevatedButton.icon(
+                onPressed: () => _captureImage(false),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xff4CAF50),
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 30,
+                    vertical: 12,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                icon: const Icon(Icons.photo_library, color: Colors.black),
+                label: const Text(
+                  'Select from Gallery',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                ),
+              ),
+            ),
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 8),
               child: Text(

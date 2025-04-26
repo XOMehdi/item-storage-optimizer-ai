@@ -19,12 +19,12 @@ class FunctionalityModel {
         buttonPath: 'assets/icons/button.svg',
         boxIsSelected: false,
       ),
-       FunctionalityModel(
-         name: 'Measure Item',
-        iconPath: 'assets/icons/scanner.svg',
-         buttonPath: 'assets/icons/button.svg',
-         boxIsSelected: false,
-       ),
+      FunctionalityModel(
+        name: 'Measure Item',
+        iconPath: 'assets/icons/measure.svg',
+        buttonPath: 'assets/icons/button.svg',
+        boxIsSelected: false,
+      ),
       FunctionalityModel(
         name: 'Scan Item',
         iconPath: 'assets/icons/scanner.svg',

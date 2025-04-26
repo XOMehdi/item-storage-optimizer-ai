@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:camera/camera.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:gal/gal.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'setup_refrence_object.dart';
@@ -55,10 +54,8 @@ class MeasureItemState extends State<MeasureItem> {
           (context) => AlertDialog(
             title: const Text('Instructions'),
             content: const Text(
-              'Step 1: Capture the first image with a reference object.\n'
-              'Step 2: Specify its position, height, and width, then click Confirm.\n'
-              'Step 3: Capture the second image with the reference object.\n'
-              'Step 4: Specify its position, height, and width, then click Confirm to get measurements.',
+              'Step 1: Capture the image with a reference object.\n'
+              'Step 2: click Confirm to get measurements.',
             ),
             actions: [
               TextButton(
@@ -77,7 +74,6 @@ class MeasureItemState extends State<MeasureItem> {
           _controller != null &&
           _controller!.value.isInitialized) {
         image = await _controller!.takePicture();
-        await Gal.putImage(image.path); // Optional: save to gallery
       } else {
         final picker = ImagePicker();
         image = await picker.pickImage(source: ImageSource.gallery);
