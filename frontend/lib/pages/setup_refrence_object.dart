@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:camera/camera.dart';
@@ -8,11 +10,13 @@ import 'package:http/http.dart' as http;
 import 'preferences.dart';
 
 class SetupReferenceObject extends StatefulWidget {
+  const SetupReferenceObject({super.key});
+
   @override
-  _SetupReferenceObjectState createState() => _SetupReferenceObjectState();
+  SetupReferenceObjectState createState() => SetupReferenceObjectState();
 }
 
-class _SetupReferenceObjectState extends State<SetupReferenceObject> {
+class SetupReferenceObjectState extends State<SetupReferenceObject> {
   CameraController? _controller;
   int _currentStep = 1; // 1 for first image, 2 for second image
   String? _firstImageB64;
@@ -40,7 +44,7 @@ class _SetupReferenceObjectState extends State<SetupReferenceObject> {
       await _controller!.initialize();
       if (mounted) setState(() {});
     } catch (e) {
-      print('Error initializing camera: $e');
+      log('Error initializing camera: $e');
     }
   }
 
@@ -107,23 +111,22 @@ class _SetupReferenceObjectState extends State<SetupReferenceObject> {
         );
       }
     } catch (e) {
-      print('Error capturing image: $e');
-      if (mounted) {
-        showDialog(
-          context: context,
-          builder:
-              (context) => AlertDialog(
-                title: const Text('Error'),
-                content: Text('Failed to capture image: $e'),
-                actions: [
-                  TextButton(
-                    onPressed: () => Navigator.of(context).pop(),
-                    child: const Text('OK'),
-                  ),
-                ],
-              ),
-        );
-      }
+      log('Error capturing image: $e');
+      if (!mounted) return;
+      showDialog(
+        context: context,
+        builder:
+            (context) => AlertDialog(
+              title: const Text('Error'),
+              content: Text('Failed to capture image: $e'),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text('OK'),
+                ),
+              ],
+            ),
+      );
     }
   }
 
@@ -208,7 +211,7 @@ class _SetupReferenceObjectState extends State<SetupReferenceObject> {
         body: jsonEncode(payload),
       );
 
-      print('API Response: ${response.body}'); // Log for debugging
+      log('API Response: ${response.body}');
 
       if (response.statusCode == 200) {
         final result = jsonDecode(response.body);
@@ -352,7 +355,7 @@ class _SetupReferenceObjectState extends State<SetupReferenceObject> {
               ),
               const SizedBox(height: 20),
               if (_controller != null && _controller!.value.isInitialized)
-                Container(
+                SizedBox(
                   height: MediaQuery.of(context).size.height * 0.44,
                   width: MediaQuery.of(context).size.width * 0.8,
                   child: CameraPreview(_controller!),
@@ -422,7 +425,7 @@ class _SetupReferenceObjectState extends State<SetupReferenceObject> {
                     ),
                   ),
                   const SizedBox(width: 10),
-                  Container(
+                  SizedBox(
                     width: 120,
                     child: DropdownButtonFormField<String>(
                       value:
@@ -532,14 +535,14 @@ class _SetupReferenceObjectState extends State<SetupReferenceObject> {
         child: Container(
           margin: const EdgeInsets.all(10),
           alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: const Color(0xffF7F8F8),
+            borderRadius: BorderRadius.circular(10),
+          ),
           child: SvgPicture.asset(
             'assets/icons/Arrow.svg',
             height: 20,
             width: 20,
-          ),
-          decoration: BoxDecoration(
-            color: const Color(0xffF7F8F8),
-            borderRadius: BorderRadius.circular(10),
           ),
         ),
       ),
@@ -550,14 +553,14 @@ class _SetupReferenceObjectState extends State<SetupReferenceObject> {
             margin: const EdgeInsets.all(10),
             alignment: Alignment.center,
             width: 37,
+            decoration: BoxDecoration(
+              color: const Color(0xffF7F8F8),
+              borderRadius: BorderRadius.circular(10),
+            ),
             child: SvgPicture.asset(
               'assets/icons/dots.svg',
               height: 5,
               width: 5,
-            ),
-            decoration: BoxDecoration(
-              color: const Color(0xffF7F8F8),
-              borderRadius: BorderRadius.circular(10),
             ),
           ),
         ),
@@ -582,7 +585,7 @@ class _DimensionInputField extends StatelessWidget {
           style: const TextStyle(fontSize: 14, color: Colors.black87),
         ),
         const SizedBox(height: 8),
-        Container(
+        SizedBox(
           width: 120,
           child: TextField(
             controller: controller,

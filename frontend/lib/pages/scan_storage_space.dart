@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:camera/camera.dart';
@@ -8,10 +10,10 @@ class ScanStorageSpacePage extends StatefulWidget {
   const ScanStorageSpacePage({super.key});
 
   @override
-  _ScanStorageSpacePageState createState() => _ScanStorageSpacePageState();
+  ScanStorageSpacePageState createState() => ScanStorageSpacePageState();
 }
 
-class _ScanStorageSpacePageState extends State<ScanStorageSpacePage> {
+class ScanStorageSpacePageState extends State<ScanStorageSpacePage> {
   CameraController? _controller;
 
   @override
@@ -33,7 +35,7 @@ class _ScanStorageSpacePageState extends State<ScanStorageSpacePage> {
         setState(() {});
       }
     } catch (e) {
-      print('Error initializing camera: $e');
+      log('Error initializing camera: $e');
     }
   }
 
@@ -92,7 +94,7 @@ class _ScanStorageSpacePageState extends State<ScanStorageSpacePage> {
                             _controller!.value.isInitialized) {
                           try {
                             final image = await _controller!.takePicture();
-                            print('Image saved at: ${image.path}');
+                            log('Image saved at: ${image.path}');
 
                             await Gal.putImage(image.path);
                             //  success
@@ -145,7 +147,7 @@ class _ScanStorageSpacePageState extends State<ScanStorageSpacePage> {
                                     ),
                               );
                             }
-                            print('Error saving image: $e');
+                            log('Error saving image: $e');
                           }
                         }
                       },
@@ -197,14 +199,14 @@ class _ScanStorageSpacePageState extends State<ScanStorageSpacePage> {
         child: Container(
           margin: const EdgeInsets.all(10),
           alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: const Color(0xffF7F8F8),
+            borderRadius: BorderRadius.circular(10),
+          ),
           child: SvgPicture.asset(
             'assets/icons/Arrow.svg',
             height: 20,
             width: 20,
-          ),
-          decoration: BoxDecoration(
-            color: const Color(0xffF7F8F8),
-            borderRadius: BorderRadius.circular(10),
           ),
         ),
       ),
@@ -217,14 +219,14 @@ class _ScanStorageSpacePageState extends State<ScanStorageSpacePage> {
             margin: const EdgeInsets.all(10),
             alignment: Alignment.center,
             width: 37,
+            decoration: BoxDecoration(
+              color: const Color(0xffF7F8F8),
+              borderRadius: BorderRadius.circular(10),
+            ),
             child: SvgPicture.asset(
               'assets/icons/dots.svg',
               height: 5,
               width: 5,
-            ),
-            decoration: BoxDecoration(
-              color: const Color(0xffF7F8F8),
-              borderRadius: BorderRadius.circular(10),
             ),
           ),
         ),

@@ -6,28 +6,19 @@ class Preferences {
   factory Preferences() => _instance;
   Preferences._internal();
 
-  String _measurementUnit = 'centimeter';
-  bool _drawSelection = false;
-  bool _showOutput = true;
-
-  String get measurementUnit => _measurementUnit;
-  set measurementUnit(String value) => _measurementUnit = value;
-
-  bool get drawSelection => _drawSelection;
-  set drawSelection(bool value) => _drawSelection = value;
-
-  bool get showOutput => _showOutput;
-  set showOutput(bool value) => _showOutput = value;
+  String measurementUnit = 'centimeter';
+  bool drawSelection = false;
+  bool showOutput = true;
 }
 
 class PreferencesPage extends StatefulWidget {
   const PreferencesPage({super.key});
 
   @override
-  _PreferencesPageState createState() => _PreferencesPageState();
+  PreferencesPageState createState() => PreferencesPageState();
 }
 
-class _PreferencesPageState extends State<PreferencesPage> {
+class PreferencesPageState extends State<PreferencesPage> {
   void _showInstructionsDialog(BuildContext context) {
     showDialog(
       context: context,
@@ -111,7 +102,7 @@ class _PreferencesPageState extends State<PreferencesPage> {
     border: Border.all(color: const Color(0xffE0E0E0)),
     boxShadow: [
       BoxShadow(
-        color: const Color(0xff1D1617).withOpacity(0.07),
+        color: const Color(0xff1D1617).withAlpha((0.07 * 255).toInt()),
         offset: const Offset(0, 10),
         blurRadius: 40,
         spreadRadius: 0,

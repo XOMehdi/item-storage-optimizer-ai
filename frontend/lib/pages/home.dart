@@ -1,16 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:frontend/models/fuctionality_model.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:tutorial_coach_mark/tutorial_coach_mark.dart';
 
 class HomePage extends StatefulWidget {
-  HomePage({super.key});
+  const HomePage({super.key});
 
   @override
-  _HomePageState createState() => _HomePageState();
+  HomePageState createState() => HomePageState();
 }
 
-class _HomePageState extends State<HomePage> {
+class HomePageState extends State<HomePage> {
   final List<FunctionalityModel> functionalities =
       FunctionalityModel.getFunctionalities();
 
@@ -26,6 +27,7 @@ class _HomePageState extends State<HomePage> {
   List<TargetFocus> targets = [];
   final GlobalKey guideKey = GlobalKey();
   List<GlobalKey> functionalityKeys = [];
+  bool _isFirstLaunch = true;
 
   @override
   void initState() {
@@ -35,8 +37,7 @@ class _HomePageState extends State<HomePage> {
       (index) => GlobalKey(),
     );
     _initTutorial();
-
-    WidgetsBinding.instance.addPostFrameCallback((_) => _showTutorial());
+    _checkFirstLaunch();
   }
 
   void _initTutorial() {
@@ -120,14 +121,49 @@ class _HomePageState extends State<HomePage> {
       textSkip: "SKIP",
       paddingFocus: 5,
       opacityShadow: 0.8,
-      onFinish: () {
-        print("Tutorial finished");
-      },
+      onFinish: () {},
       onSkip: () {
-        print("Tutorial skipped");
         return true; // Explicitly return a bool value
       },
     );
+  }
+
+  Future<void> _checkFirstLaunch() async {
+    final prefs = await SharedPreferences.getInstance();
+    _isFirstLaunch = prefs.getBool('first_launch') ?? true;
+
+    if (_isFirstLaunch) {
+      // Show a small welcome message with "Start Tour" button
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        showDialog(
+          context: context,
+          builder:
+              (context) => AlertDialog(
+                title: const Text('Welcome to Storage Optimizer'),
+                content: const Text(
+                  'Would you like to take a quick tour of the app?',
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () {
+                      Navigator.pop(context);
+                      _showTutorial();
+                      prefs.setBool('first_launch', false);
+                    },
+                    child: const Text('Yes, show me around'),
+                  ),
+                  TextButton(
+                    onPressed: () {
+                      Navigator.pop(context);
+                      prefs.setBool('first_launch', false);
+                    },
+                    child: const Text('Skip'),
+                  ),
+                ],
+              ),
+        );
+      });
+    }
   }
 
   void _showTutorial() {
@@ -190,6 +226,20 @@ class _HomePageState extends State<HomePage> {
                     },
                     child: Container(
                       height: 100,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(
+                              0xff1D1617,
+                            ).withAlpha((0.07 * 255).toInt()),
+                            offset: const Offset(0, 10),
+                            blurRadius: 40,
+                            spreadRadius: 0,
+                          ),
+                        ],
+                      ),
                       child: Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 16),
                         child: Row(
@@ -220,18 +270,6 @@ class _HomePageState extends State<HomePage> {
                             ),
                           ],
                         ),
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(16),
-                        boxShadow: [
-                          BoxShadow(
-                            color: const Color(0xff1D1617).withOpacity(0.07),
-                            offset: const Offset(0, 10),
-                            blurRadius: 40,
-                            spreadRadius: 0,
-                          ),
-                        ],
                       ),
                     ),
                   );
@@ -266,14 +304,14 @@ class _HomePageState extends State<HomePage> {
         child: Container(
           margin: const EdgeInsets.all(10),
           alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: const Color(0xffF7F8F8),
+            borderRadius: BorderRadius.circular(10),
+          ),
           child: SvgPicture.asset(
             'assets/icons/guide.svg',
             height: 20,
             width: 20,
-          ),
-          decoration: BoxDecoration(
-            color: const Color(0xffF7F8F8),
-            borderRadius: BorderRadius.circular(10),
           ),
         ),
       ),
@@ -284,14 +322,14 @@ class _HomePageState extends State<HomePage> {
             margin: const EdgeInsets.all(10),
             alignment: Alignment.center,
             width: 37,
+            decoration: BoxDecoration(
+              color: const Color(0xffF7F8F8),
+              borderRadius: BorderRadius.circular(10),
+            ),
             child: SvgPicture.asset(
               'assets/icons/dots.svg',
               height: 5,
               width: 5,
-            ),
-            decoration: BoxDecoration(
-              color: const Color(0xffF7F8F8),
-              borderRadius: BorderRadius.circular(10),
             ),
           ),
         ),

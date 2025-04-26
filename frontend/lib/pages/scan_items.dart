@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:camera/camera.dart';
@@ -15,10 +17,10 @@ class ScanItemsPage extends StatefulWidget {
   const ScanItemsPage({super.key});
 
   @override
-  _ScanItemsPageState createState() => _ScanItemsPageState();
+  ScanItemsPageState createState() => ScanItemsPageState();
 }
 
-class _ScanItemsPageState extends State<ScanItemsPage> {
+class ScanItemsPageState extends State<ScanItemsPage> {
   CameraController? _controller;
   bool _isCameraInitialized = false;
   int dimensionCounter = 0;
@@ -54,7 +56,7 @@ class _ScanItemsPageState extends State<ScanItemsPage> {
         });
       }
     } catch (e) {
-      print('Error initializing camera: $e');
+      log('Error initializing camera: $e', name: 'CameraInitialization');
     }
   }
 
@@ -72,7 +74,7 @@ class _ScanItemsPageState extends State<ScanItemsPage> {
       final bytes = await file.readAsBytes();
       final decodedImage = img.decodeImage(bytes);
       if (decodedImage == null) {
-        print('Failed to decode image');
+        log('Failed to decode image', name: 'ImageDecoding');
         return;
       }
       final originalSize = Size(
@@ -98,7 +100,7 @@ class _ScanItemsPageState extends State<ScanItemsPage> {
         }
       });
     } catch (e) {
-      print('Error capturing image: $e');
+      log('Error capturing image: $e', name: 'ImageCapture');
     }
   }
 
@@ -265,7 +267,9 @@ class _ScanItemsPageState extends State<ScanItemsPage> {
         body: jsonEncode(payload),
       );
 
-      Navigator.pop(context);
+      if (mounted) {
+        Navigator.pop(context);
+      }
 
       if (response.statusCode == 200) {
         final result = jsonDecode(response.body);
@@ -503,7 +507,7 @@ class _ScanItemsPageState extends State<ScanItemsPage> {
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 10),
               child: Text(
-                _scannedItems.length == 0
+                _scannedItems.isEmpty
                     ? 'Please capture the front image'
                     : _scannedItems.length == 1
                     ? 'Please capture the side image'
