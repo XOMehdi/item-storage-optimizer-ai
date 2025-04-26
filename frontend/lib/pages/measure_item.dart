@@ -6,7 +6,6 @@ import 'package:image_picker/image_picker.dart';
 import 'package:gal/gal.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'preferences.dart';
 
 class MeasureItem extends StatefulWidget {
   const MeasureItem({super.key});
@@ -189,23 +188,15 @@ class MeasureItemState extends State<MeasureItem> {
     }
 
     final payload = {
-      "front_image": frontImage,
-      "side_image": sideImage,
+      "image_b64": frontImage,
       "ref_obj_pos": refObjPos,
       "ref_obj_width_real": 8.56,
-      "ref_obj_width":
-          (_firstPosition == 'top' || _firstPosition == 'bottom')
-              ? firstWidth
-              : secondWidth,
-      "ref_obj_height":
-          (_firstPosition == 'top' || _firstPosition == 'bottom')
-              ? firstHeight
-              : secondHeight,
+      "ref_obj_height_real": 5.39,
     };
 
     try {
       final response = await http.post(
-        Uri.parse('https://measurementsystem.up.railway.app/measure'),
+        Uri.parse('https://measurementsystem.up.railway.app/measure2d'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode(payload),
       );
@@ -316,23 +307,6 @@ class MeasureItemState extends State<MeasureItem> {
 
   @override
   Widget build(BuildContext context) {
-    // Get the selected unit from Preferences and map to abbreviation
-    String unit = Preferences().measurementUnit;
-    String unitLabel;
-    switch (unit) {
-      case 'centimeter':
-        unitLabel = 'cm';
-        break;
-      case 'inches':
-        unitLabel = 'in';
-        break;
-      case 'meter':
-        unitLabel = 'm';
-        break;
-      default:
-        unitLabel = 'cm'; // Fallback to 'cm' if unit is unrecognized
-    }
-
     return Scaffold(
       resizeToAvoidBottomInset: true,
       appBar: _appBar(context),
@@ -412,80 +386,6 @@ class MeasureItemState extends State<MeasureItem> {
                 ),
               ),
               const SizedBox(height: 40),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Text(
-                    'Object Position:',
-                    style: TextStyle(
-                      fontSize: 18,
-                      color: Colors.black87,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  SizedBox(
-                    width: 120,
-                    child: DropdownButtonFormField<String>(
-                      value:
-                          _currentStep == 1 ? _firstPosition : _secondPosition,
-                      decoration: InputDecoration(
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 8,
-                        ),
-                      ),
-                      items: const [
-                        DropdownMenuItem(value: 'top', child: Text('Top')),
-                        DropdownMenuItem(value: 'right', child: Text('Right')),
-                        DropdownMenuItem(
-                          value: 'bottom',
-                          child: Text('Bottom'),
-                        ),
-                        DropdownMenuItem(value: 'left', child: Text('Left')),
-                      ],
-                      onChanged: (value) {
-                        setState(() {
-                          if (_currentStep == 1) {
-                            _firstPosition = value;
-                          } else {
-                            _secondPosition = value;
-                          }
-                        });
-                      },
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 20),
-              const Text(
-                'Specify Reference Object Dimensions',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-              ),
-              const SizedBox(height: 20),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: [
-                  _DimensionInputField(
-                    label: 'Width ($unitLabel)',
-                    controller:
-                        _currentStep == 1
-                            ? _firstWidthController
-                            : _secondWidthController,
-                  ),
-                  _DimensionInputField(
-                    label: 'Height ($unitLabel)',
-                    controller:
-                        _currentStep == 1
-                            ? _firstHeightController
-                            : _secondHeightController,
-                  ),
-                ],
-              ),
-              const SizedBox(height: 20),
               ElevatedButton(
                 onPressed: _confirmAction,
                 style: ElevatedButton.styleFrom(
@@ -519,7 +419,7 @@ class MeasureItemState extends State<MeasureItem> {
   AppBar _appBar(BuildContext context) {
     return AppBar(
       title: const Text(
-        'Setup Reference Object',
+        'Measure Item',
         style: TextStyle(
           color: Colors.black,
           fontSize: 18,
@@ -561,45 +461,6 @@ class MeasureItemState extends State<MeasureItem> {
               height: 5,
               width: 5,
             ),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _DimensionInputField extends StatelessWidget {
-  final String label;
-  final TextEditingController controller;
-
-  const _DimensionInputField({required this.label, required this.controller});
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: const TextStyle(fontSize: 14, color: Colors.black87),
-        ),
-        const SizedBox(height: 8),
-        SizedBox(
-          width: 120,
-          child: TextField(
-            controller: controller,
-            decoration: InputDecoration(
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 12,
-                vertical: 8,
-              ),
-              hintText: 'Enter value',
-              hintStyle: const TextStyle(color: Colors.black38),
-            ),
-            keyboardType: TextInputType.number,
           ),
         ),
       ],

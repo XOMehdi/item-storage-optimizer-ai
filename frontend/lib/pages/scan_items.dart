@@ -41,12 +41,12 @@ class ScanItemsPageState extends State<ScanItemsPage> {
     _initializeCamera();
   }
 
-  /// Initializes the camera
   Future<void> _initializeCamera() async {
     try {
       final cameras = await availableCameras();
       final backCamera = cameras.firstWhere(
         (camera) => camera.lensDirection == CameraLensDirection.back,
+        orElse: () => cameras.first,
       );
       _controller = CameraController(backCamera, ResolutionPreset.high);
       await _controller!.initialize();
@@ -67,7 +67,7 @@ class ScanItemsPageState extends State<ScanItemsPage> {
   }
 
   Future<void> _captureImage() async {
-    if (!_controller!.value.isInitialized) return;
+    if (_controller == null || !_controller!.value.isInitialized) return;
     try {
       final image = await _controller!.takePicture();
       final file = File(image.path);
@@ -216,7 +216,7 @@ class ScanItemsPageState extends State<ScanItemsPage> {
               children: [
                 CircularProgressIndicator(),
                 SizedBox(width: 20),
-                Text('Scanning...'),
+                Expanded(child: Text('Scanning...')),
               ],
             ),
           ),
@@ -237,8 +237,11 @@ class ScanItemsPageState extends State<ScanItemsPage> {
       final frontB64 = base64Encode(frontBytes);
       final sideB64 = base64Encode(sideBytes);
 
-      const cw = 350.0;
-      const ch = 540.0;
+      // Calculate canvas dimensions based on screen size
+      final mediaSize = MediaQuery.of(context).size;
+      final cw = mediaSize.width * 0.8; // 80% of screen width
+      final ch = mediaSize.height * 0.6; // 60% of screen height
+
       final frontPolygonsTransformed = _transformPolygons(
         frontPolygons,
         cw,
@@ -253,10 +256,11 @@ class ScanItemsPageState extends State<ScanItemsPage> {
       );
 
       final payload = {
-        "front_image": frontB64,
-        "side_image": sideB64,
+        "front_image_b64": frontB64,
+        "side_image_b64": sideB64,
         "ref_obj_pos": "left",
         "ref_obj_width_real": 8.56,
+        "ref_obj_height_real": 5.39,
         "polygons_front_image": frontPolygonsTransformed,
         "polygons_side_image": sidePolygonsTransformed,
       };
@@ -268,7 +272,7 @@ class ScanItemsPageState extends State<ScanItemsPage> {
       );
 
       if (mounted) {
-        Navigator.pop(context);
+        Navigator.pop(context); // Close loading dialog
       }
 
       if (response.statusCode == 200) {
@@ -281,7 +285,7 @@ class ScanItemsPageState extends State<ScanItemsPage> {
                   title: const Text('Measurement Successful'),
                   content: SizedBox(
                     width: MediaQuery.of(context).size.width * 0.9,
-                    height: MediaQuery.of(context).size.height * 0.8,
+                    height: MediaQuery.of(context).size.height * 0.7,
                     child: SingleChildScrollView(
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
@@ -291,6 +295,7 @@ class ScanItemsPageState extends State<ScanItemsPage> {
                             'Width: ${result['width'] ?? 'N/A'} units\n'
                             'Height: ${result['height'] ?? 'N/A'} units\n'
                             'Depth: ${result['depth'] ?? 'N/A'} units',
+                            style: const TextStyle(fontSize: 16),
                           ),
                           const SizedBox(height: 10),
                           if (result.containsKey('front_annotated_image') &&
@@ -365,7 +370,9 @@ class ScanItemsPageState extends State<ScanItemsPage> {
         );
       }
     } catch (e) {
-      Navigator.pop(context);
+      if (mounted) {
+        Navigator.pop(context); // Close loading dialog
+      }
       showDialog(
         context: context,
         builder:
@@ -383,7 +390,6 @@ class ScanItemsPageState extends State<ScanItemsPage> {
     }
   }
 
-  /// Transforms polygon coordinates
   List<List<List<double>>>? _transformPolygons(
     List<List<Offset>>? polygons,
     double cw,
@@ -411,18 +417,20 @@ class ScanItemsPageState extends State<ScanItemsPage> {
       builder:
           (context) => AlertDialog(
             title: const Text('Instructions'),
-            content: Text(
-              drawPolygonOrNot
-                  ? '1. Click Capture to take the front image and draw polygons on it.\n'
-                      '2. Click Done to save it.\n'
-                      '3. Click Change Dimension, then Capture to take the side image and draw polygons.\n'
-                      '4. Click Done to save it.\n'
-                      '5. Click Scan Item to send the data and see the results.\n'
-                      '6. Click Next Item to reset and scan another item.'
-                  : '1. Click Capture to take the front image (no polygons).\n'
-                      '2. Click Change Dimension, then Capture to take the side image (no polygons).\n'
-                      '3. Click Scan Item to send the data and see the results.\n'
-                      '4. Click Next Item to reset and scan another item.',
+            content: SingleChildScrollView(
+              child: Text(
+                drawPolygonOrNot
+                    ? '1. Click Capture to take the front image and draw polygons on it.\n'
+                        '2. Click Done to save it.\n'
+                        '3. Click Change Dimension, then Capture to take the side image and draw polygons.\n'
+                        '4. Click Done to save it.\n'
+                        '5. Click Scan Item to send the data and see the results.\n'
+                        '6. Click Next Item to reset and scan another item.'
+                    : '1. Click Capture to take the front image (no polygons).\n'
+                        '2. Click Change Dimension, then Capture to take the side image (no polygons).\n'
+                        '3. Click Scan Item to send the data and see the results.\n'
+                        '4. Click Next Item to reset and scan another item.',
+              ),
             ),
             actions: [
               TextButton(
@@ -436,6 +444,9 @@ class ScanItemsPageState extends State<ScanItemsPage> {
 
   @override
   Widget build(BuildContext context) {
+    final Size screenSize = MediaQuery.of(context).size;
+    final bool isSmallScreen = screenSize.width < 360;
+
     return Scaffold(
       appBar: AppBar(
         title: const Text(
@@ -452,7 +463,7 @@ class ScanItemsPageState extends State<ScanItemsPage> {
         leading: GestureDetector(
           onTap: () => Navigator.pop(context),
           child: Container(
-            margin: const EdgeInsets.all(10),
+            margin: const EdgeInsets.all(8),
             alignment: Alignment.center,
             decoration: BoxDecoration(
               color: const Color(0xffF7F8F8),
@@ -460,232 +471,261 @@ class ScanItemsPageState extends State<ScanItemsPage> {
             ),
             child: SvgPicture.asset(
               'assets/icons/Arrow.svg',
-              height: 20,
-              width: 20,
+              height: 18,
+              width: 18,
+              fit: BoxFit.contain,
             ),
           ),
         ),
         actions: [
-          Row(
-            children: [
-              const Text(
-                'Draw Polygons',
-                style: TextStyle(color: Colors.black),
-              ),
-              Switch(
-                value: drawPolygonOrNot,
-                onChanged: (value) {
-                  setState(() {
-                    drawPolygonOrNot = value;
-                  });
-                },
-              ),
-            ],
-          ),
-          GestureDetector(
-            onTap: () => _showInstructionsDialog(context),
-            child: Container(
-              margin: const EdgeInsets.all(10),
-              alignment: Alignment.center,
-              width: 37,
-              decoration: BoxDecoration(
-                color: const Color(0xffF7F8F8),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: SvgPicture.asset(
-                'assets/icons/dots.svg',
-                height: 5,
-                width: 5,
-              ),
-            ),
-          ),
-        ],
-      ),
-      body: Column(
-        children: [
-          if (!isDrawingMode)
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 10),
-              child: Text(
-                _scannedItems.isEmpty
-                    ? 'Please capture the front image'
-                    : _scannedItems.length == 1
-                    ? 'Please capture the side image'
-                    : 'Ready to scan item',
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-          Expanded(
-            flex: 20,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(12),
-                child: Container(
-                  width: 350,
-                  color: Colors.grey[300],
-                  child:
-                      isDrawingMode
-                          ? _currentImage == null
-                              ? const Center(child: Text('No image'))
-                              : GestureDetector(
-                                onTapDown: (details) {
-                                  RenderBox renderBox =
-                                      context.findRenderObject() as RenderBox;
-                                  Offset localPosition = renderBox
-                                      .globalToLocal(details.globalPosition);
-                                  _addPoint(localPosition);
-                                },
-                                child: Stack(
-                                  alignment: Alignment.center,
-                                  children: [
-                                    Image.file(
-                                      _currentImage!,
-                                      fit: BoxFit.contain,
-                                    ),
-                                    CustomPaint(
-                                      size: Size.infinite,
-                                      painter: PolygonPainter(
-                                        polygons: _currentPolygons,
-                                        currentPolygon: _currentPolygon,
-                                        drawSelection: drawSelection,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              )
-                          : _isCameraInitialized
-                          ? CameraPreview(_controller!)
-                          : const Center(child: CircularProgressIndicator()),
-                ),
-              ),
-            ),
-          ),
-          if (isDrawingMode)
+          if (!isSmallScreen)
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
-                IconButton(
-                  icon: const Icon(Icons.undo),
-                  onPressed: _undoLastPoint,
+                const Text(
+                  'Draw Polygons',
+                  style: TextStyle(color: Colors.black, fontSize: 14),
                 ),
-                IconButton(
-                  icon: const Icon(Icons.check),
-                  onPressed: _completePolygon,
-                ),
-                ElevatedButton(
-                  onPressed: _finishDrawing,
-                  child: const Text('Done'),
-                ),
-                IconButton(
-                  icon: Icon(
-                    drawSelection ? Icons.visibility : Icons.visibility_off,
-                  ),
-                  onPressed: () {
+                Switch(
+                  value: drawPolygonOrNot,
+                  onChanged: (value) {
                     setState(() {
-                      drawSelection = !drawSelection;
+                      drawPolygonOrNot = value;
                     });
                   },
                 ),
               ],
             )
           else
-            ElevatedButton.icon(
-              onPressed: _captureImage,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xff4CAF50),
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 30,
-                  vertical: 12,
-                ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
+            IconButton(
+              icon: Icon(
+                drawPolygonOrNot ? Icons.edit : Icons.edit_off,
+                color: Colors.black,
               ),
-              icon: const Icon(Icons.camera_alt, size: 20),
-              label: const Text('Capture', style: TextStyle(fontSize: 18)),
+              onPressed: () {
+                setState(() {
+                  drawPolygonOrNot = !drawPolygonOrNot;
+                });
+              },
+              tooltip: 'Toggle Draw Polygons',
             ),
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 10),
-            child: Text(
-              'Dimension Changes: $dimensionCounter',
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
-            ),
-          ),
-          const Spacer(),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                GestureDetector(
-                  onTap: _scanItem,
-                  child: Column(
-                    children: [
-                      SvgPicture.asset(
-                        'assets/icons/correct.svg',
-                        width: 60,
-                        height: 60,
-                      ),
-                      const SizedBox(height: 8),
-                      const Text(
-                        'Scan Item',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                GestureDetector(
-                  onTap: _changeDimension,
-                  child: Column(
-                    children: [
-                      SvgPicture.asset(
-                        'assets/icons/change.svg',
-                        width: 60,
-                        height: 60,
-                      ),
-                      const SizedBox(height: 8),
-                      const Text(
-                        'Change Dimension',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                GestureDetector(
-                  onTap: _nextItem,
-                  child: Column(
-                    children: [
-                      SvgPicture.asset(
-                        'assets/icons/next.svg',
-                        width: 60,
-                        height: 60,
-                      ),
-                      const SizedBox(height: 8),
-                      const Text(
-                        'Next Item',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
+          IconButton(
+            icon: const Icon(Icons.help_outline, color: Colors.black),
+            onPressed: () => _showInstructionsDialog(context),
+            tooltip: 'Instructions',
           ),
         ],
+      ),
+      body: SafeArea(
+        child: Column(
+          children: [
+            if (!isDrawingMode)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                child: Text(
+                  _scannedItems.isEmpty
+                      ? 'Please capture the front image'
+                      : _scannedItems.length == 1
+                      ? 'Please capture the side image'
+                      : 'Ready to scan item',
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            Expanded(
+              flex: 3,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: Container(
+                    width: double.infinity,
+                    color: Colors.grey[300],
+                    child:
+                        isDrawingMode
+                            ? _currentImage == null
+                                ? const Center(child: Text('No image'))
+                                : GestureDetector(
+                                  onTapDown: (details) {
+                                    final RenderBox renderBox =
+                                        context.findRenderObject() as RenderBox;
+                                    final Offset localPosition = renderBox
+                                        .globalToLocal(details.globalPosition);
+                                    _addPoint(localPosition);
+                                  },
+                                  child: Stack(
+                                    alignment: Alignment.center,
+                                    children: [
+                                      Image.file(
+                                        _currentImage!,
+                                        fit: BoxFit.contain,
+                                        width: double.infinity,
+                                        height: double.infinity,
+                                      ),
+                                      CustomPaint(
+                                        size: Size.infinite,
+                                        painter: PolygonPainter(
+                                          polygons: _currentPolygons,
+                                          currentPolygon: _currentPolygon,
+                                          drawSelection: drawSelection,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                )
+                            : _isCameraInitialized
+                            ? ClipRRect(
+                              borderRadius: BorderRadius.circular(12),
+                              child: AspectRatio(
+                                aspectRatio: _controller!.value.aspectRatio,
+                                child: CameraPreview(_controller!),
+                              ),
+                            )
+                            : const Center(child: CircularProgressIndicator()),
+                  ),
+                ),
+              ),
+            ),
+            if (isDrawingMode)
+              Container(
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.undo),
+                      onPressed: _undoLastPoint,
+                      tooltip: 'Undo Last Point',
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.check),
+                      onPressed: _completePolygon,
+                      tooltip: 'Complete Polygon',
+                    ),
+                    ElevatedButton(
+                      onPressed: _finishDrawing,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xff4CAF50),
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                      child: const Text('Done'),
+                    ),
+                    IconButton(
+                      icon: Icon(
+                        drawSelection ? Icons.visibility : Icons.visibility_off,
+                      ),
+                      onPressed: () {
+                        setState(() {
+                          drawSelection = !drawSelection;
+                        });
+                      },
+                      tooltip: 'Toggle Visibility',
+                    ),
+                  ],
+                ),
+              )
+            else
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                child: ElevatedButton.icon(
+                  onPressed: _captureImage,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xff4CAF50),
+                    foregroundColor: Colors.white,
+                    padding: EdgeInsets.symmetric(
+                      horizontal: isSmallScreen ? 20 : 30,
+                      vertical: 12,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                  icon: const Icon(Icons.camera_alt, size: 20),
+                  label: Text(
+                    'Capture',
+                    style: TextStyle(fontSize: isSmallScreen ? 16 : 18),
+                  ),
+                ),
+              ),
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              child: Text(
+                'Dimension Changes: $dimensionCounter',
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+            const Spacer(),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  _buildActionButton(
+                    onTap: _scanItem,
+                    icon: 'assets/icons/correct.svg',
+                    label: 'Scan Item',
+                    isSmallScreen: isSmallScreen,
+                  ),
+                  _buildActionButton(
+                    onTap: _changeDimension,
+                    icon: 'assets/icons/change.svg',
+                    label: 'Change Dimension',
+                    isSmallScreen: isSmallScreen,
+                  ),
+                  _buildActionButton(
+                    onTap: _nextItem,
+                    icon: 'assets/icons/next.svg',
+                    label: 'Next Item',
+                    isSmallScreen: isSmallScreen,
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildActionButton({
+    required VoidCallback onTap,
+    required String icon,
+    required String label,
+    required bool isSmallScreen,
+  }) {
+    return Expanded(
+      child: GestureDetector(
+        onTap: onTap,
+        child: Column(
+          children: [
+            SvgPicture.asset(
+              icon,
+              width: isSmallScreen ? 40 : 50,
+              height: isSmallScreen ? 40 : 50,
+              fit: BoxFit.contain,
+            ),
+            const SizedBox(height: 4),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: isSmallScreen ? 12 : 14,
+                fontWeight: FontWeight.w500,
+              ),
+              textAlign: TextAlign.center,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
+        ),
       ),
     );
   }

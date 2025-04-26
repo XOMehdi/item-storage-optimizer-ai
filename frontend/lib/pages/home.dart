@@ -17,7 +17,7 @@ class HomePageState extends State<HomePage> {
 
   final Map<String, String> routes = {
     'Setup Reference Object': '/setupReferenceObject',
-    //  'Measure Item': '/measureItem',
+    'Measure Item': '/measureItem',
     'Scan Item': '/scanItems',
     'Scan Storage Space': '/scanStorageSpace',
     'Preferences': '/preferences',
@@ -49,26 +49,29 @@ class HomePageState extends State<HomePage> {
           TargetContent(
             align: ContentAlign.bottom,
             builder: (context, controller) {
-              return const Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    "Guide Button",
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                      fontSize: 20,
+              return Container(
+                constraints: const BoxConstraints(maxWidth: 300),
+                child: const Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      "Guide Button",
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                        fontSize: 20,
+                      ),
                     ),
-                  ),
-                  Padding(
-                    padding: EdgeInsets.only(top: 10.0),
-                    child: Text(
-                      "Tap here to start the tutorial and learn about the app's features.",
-                      style: TextStyle(color: Colors.white),
+                    Padding(
+                      padding: EdgeInsets.only(top: 10.0),
+                      child: Text(
+                        "Tap here to start the tutorial and learn about the app's features.",
+                        style: TextStyle(color: Colors.white),
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               );
             },
           ),
@@ -87,26 +90,29 @@ class HomePageState extends State<HomePage> {
             TargetContent(
               align: ContentAlign.top,
               builder: (context, controller) {
-                return Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      functionalities[i].name,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                        fontSize: 20,
+                return Container(
+                  constraints: const BoxConstraints(maxWidth: 300),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        functionalities[i].name,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                          fontSize: 20,
+                        ),
                       ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.only(top: 10.0),
-                      child: Text(
-                        _getFunctionalityDescription(functionalities[i].name),
-                        style: const TextStyle(color: Colors.white),
+                      Padding(
+                        padding: const EdgeInsets.only(top: 10.0),
+                        child: Text(
+                          _getFunctionalityDescription(functionalities[i].name),
+                          style: const TextStyle(color: Colors.white),
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 );
               },
             ),
@@ -123,7 +129,7 @@ class HomePageState extends State<HomePage> {
       opacityShadow: 0.8,
       onFinish: () {},
       onSkip: () {
-        return true; // Explicitly return a bool value
+        return true;
       },
     );
   }
@@ -188,121 +194,136 @@ class HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: appBar(context),
+      appBar: _buildAppBar(context),
       backgroundColor: Colors.white,
-      body: ListView(
-        children: [
-          const SizedBox(height: 40),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Padding(
-                padding: EdgeInsets.only(left: 20),
-                child: Text(
-                  'Item Storage Optimizer AI',
-                  style: TextStyle(
-                    color: Colors.black,
-                    fontSize: 25,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 15),
-              ListView.separated(
-                itemCount: functionalities.length,
-                shrinkWrap: true,
-                separatorBuilder:
-                    (context, index) => const SizedBox(height: 25),
-                padding: const EdgeInsets.only(left: 20, right: 20),
-                itemBuilder: (context, index) {
-                  final functionality = functionalities[index];
-                  return GestureDetector(
-                    key: functionalityKeys[index],
-                    onTap: () {
-                      String? route = routes[functionality.name];
-                      if (route != null) {
-                        Navigator.pushNamed(context, route);
-                      }
-                    },
-                    child: Container(
-                      height: 100,
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(16),
-                        boxShadow: [
-                          BoxShadow(
-                            color: const Color(
-                              0xff1D1617,
-                            ).withAlpha((0.07 * 255).toInt()),
-                            offset: const Offset(0, 10),
-                            blurRadius: 40,
-                            spreadRadius: 0,
-                          ),
-                        ],
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            SvgPicture.asset(
-                              functionality.iconPath,
-                              width: 65,
-                              height: 65,
-                            ),
-                            const SizedBox(width: 30),
-                            Expanded(
-                              child: Text(
-                                functionality.name,
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.w500,
-                                  color: Colors.black,
-                                  fontSize: 16,
-                                ),
-                                overflow: TextOverflow.ellipsis,
-                                maxLines: 1,
-                              ),
-                            ),
-                            SvgPicture.asset(
-                              functionality.buttonPath,
-                              width: 30,
-                              height: 30,
-                            ),
-                          ],
+      body: SafeArea(
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            return SingleChildScrollView(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SizedBox(height: 24),
+                    const Padding(
+                      padding: EdgeInsets.only(left: 4),
+                      child: Text(
+                        'Item Storage Optimizer AI',
+                        style: TextStyle(
+                          color: Colors.black,
+                          fontSize: 22,
+                          fontWeight: FontWeight.w600,
                         ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
-                  );
-                },
+                    const SizedBox(height: 15),
+                    ListView.separated(
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemCount: functionalities.length,
+                      shrinkWrap: true,
+                      separatorBuilder:
+                          (context, index) => const SizedBox(height: 16),
+                      itemBuilder: (context, index) {
+                        final functionality = functionalities[index];
+                        return _buildFunctionalityCard(functionality, index);
+                      },
+                    ),
+                    const SizedBox(height: 24),
+                  ],
+                ),
               ),
-            ],
-          ),
-          const SizedBox(height: 40),
-        ],
+            );
+          },
+        ),
       ),
     );
   }
 
-  AppBar appBar(BuildContext context) {
-    return AppBar(
-      title: const Text(
-        'Storage Optimizer',
-        style: TextStyle(
-          color: Colors.black,
-          fontSize: 18,
-          fontWeight: FontWeight.bold,
+  Widget _buildFunctionalityCard(FunctionalityModel functionality, int index) {
+    return GestureDetector(
+      key: functionalityKeys[index],
+      onTap: () {
+        String? route = routes[functionality.name];
+        if (route != null) {
+          Navigator.pushNamed(context, route);
+        }
+      },
+      child: Container(
+        height: 90,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xff1D1617).withAlpha((0.07 * 255).toInt()),
+              offset: const Offset(0, 10),
+              blurRadius: 40,
+              spreadRadius: 0,
+            ),
+          ],
+        ),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              SvgPicture.asset(
+                functionality.iconPath,
+                width: 50,
+                height: 50,
+                fit: BoxFit.contain,
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Text(
+                  functionality.name,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w500,
+                    color: Colors.black,
+                    fontSize: 15,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 2,
+                ),
+              ),
+              const SizedBox(width: 8),
+              SvgPicture.asset(
+                functionality.buttonPath,
+                width: 24,
+                height: 24,
+                fit: BoxFit.contain,
+              ),
+            ],
+          ),
         ),
       ),
-      backgroundColor: const Color.fromARGB(255, 255, 255, 255),
-      elevation: 0.0,
+    );
+  }
+
+  AppBar _buildAppBar(BuildContext context) {
+    return AppBar(
+      title: const FittedBox(
+        fit: BoxFit.scaleDown,
+        child: Text(
+          'Storage Optimizer',
+          style: TextStyle(
+            color: Colors.black,
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ),
+      backgroundColor: Colors.white,
+      elevation: 0.5,
       centerTitle: true,
       leading: GestureDetector(
         key: guideKey,
-        onTap: () {
-          _showTutorial();
-        },
+        onTap: _showTutorial,
         child: Container(
-          margin: const EdgeInsets.all(10),
+          margin: const EdgeInsets.all(8),
           alignment: Alignment.center,
           decoration: BoxDecoration(
             color: const Color(0xffF7F8F8),
@@ -312,6 +333,7 @@ class HomePageState extends State<HomePage> {
             'assets/icons/guide.svg',
             height: 20,
             width: 20,
+            fit: BoxFit.contain,
           ),
         ),
       ),
@@ -319,9 +341,9 @@ class HomePageState extends State<HomePage> {
         GestureDetector(
           onTap: () {},
           child: Container(
-            margin: const EdgeInsets.all(10),
+            margin: const EdgeInsets.all(8),
             alignment: Alignment.center,
-            width: 37,
+            width: 36,
             decoration: BoxDecoration(
               color: const Color(0xffF7F8F8),
               borderRadius: BorderRadius.circular(10),
@@ -330,6 +352,7 @@ class HomePageState extends State<HomePage> {
               'assets/icons/dots.svg',
               height: 5,
               width: 5,
+              fit: BoxFit.contain,
             ),
           ),
         ),
