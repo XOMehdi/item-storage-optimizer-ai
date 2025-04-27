@@ -232,35 +232,55 @@ const directional = new THREE.DirectionalLight(0xffffff, 0.8);
 directional.position.set(20, 40, 30);
 scene.add(directional);
 
-// Container wireframe
-const container = new THREE.BoxGeometry(30, 20, 10);
-const wireframe = new THREE.EdgesGeometry(container);
-const lineMaterial = new THREE.LineBasicMaterial({ color: 0x333333 });
-const boxOutline = new THREE.LineSegments(wireframe, lineMaterial);
-boxOutline.position.set(20, 20, 20);
-scene.add(boxOutline);
-
 // Get data from URL
 const urlParams = new URLSearchParams(window.location.search);
 let items = [];
+let containerDimensions = [30, 20, 10]; // Default dimensions
 try {
-    const dataParam = urlParams.get("data");
-    if (dataParam) {
+    const containerParam = urlParams.get("container");
+    const placementsParam = urlParams.get("placements");
+
+    if (containerParam) {
         try {
-            items = JSON.parse(dataParam);
+            containerDimensions = JSON.parse(containerParam);
         } catch (e) {
             try {
-                items = JSON.parse(decodeURIComponent(dataParam));
+                containerDimensions = JSON.parse(decodeURIComponent(containerParam));
             } catch (e2) {
-                console.error("Failed to parse data after decoding", e2);
+                console.error("Failed to parse container after decoding", e2);
             }
         }
     }
+
+    if (placementsParam) {
+        try {
+            items = JSON.parse(placementsParam);
+        } catch (e) {
+            try {
+                items = JSON.parse(decodeURIComponent(placementsParam));
+            } catch (e2) {
+                console.error("Failed to parse placements after decoding", e2);
+            }
+        }
+    }
+
     document.getElementById('itemCount').textContent = items.length;
 } catch (e) {
-    console.error("Failed to parse query data", e);
+    console.error("Failed to parse query params", e);
     document.getElementById('itemCount').textContent = "Error";
 }
+
+// Container wireframe
+const containerWidth = containerDimensions[0];
+const containerHeight = containerDimensions[1];
+const containerDepth = containerDimensions[2];
+
+const container = new THREE.BoxGeometry(containerWidth, containerHeight, containerDepth);
+const wireframe = new THREE.EdgesGeometry(container);
+const lineMaterial = new THREE.LineBasicMaterial({ color: 0x333333 });
+const boxOutline = new THREE.LineSegments(wireframe, lineMaterial);
+boxOutline.position.set(containerWidth / 2, containerHeight / 2, containerDepth / 2);
+scene.add(boxOutline);
 
 // Colors
 const colors = [0x3498db, 0xe74c3c, 0x2ecc71, 0xf39c12, 0x9b59b6, 0x1abc9c, 0xd35400, 0x34495e];
@@ -301,17 +321,16 @@ for (let i = 0; i < items.length; i++) {
     const containerPos = boxOutline.position;
     const mesh = new THREE.Mesh(geometry, material);
     mesh.position.set(
-        containerPos.x + x + w / 2, 
-        containerPos.y + y + h / 2, 
+        containerPos.x + x + w / 2,
+        containerPos.y + y + h / 2,
         containerPos.z + z + d / 2
     );
     mesh.visible = false;
 
-    // Also update the label position
     const label = createTextSprite(id.toString());
     label.position.set(
-        mesh.position.x, 
-        mesh.position.y + h / 2 + 2, 
+        mesh.position.x,
+        mesh.position.y + h / 2 + 2,
         mesh.position.z
     );
     label.visible = false;
