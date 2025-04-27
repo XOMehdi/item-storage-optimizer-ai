@@ -21,6 +21,11 @@ def optimize():
         if "width" not in container or "height" not in container or "depth" not in container:
             return jsonify({"status": "error", "message": "Container dimensions not specified"}), 400
 
+        # Ensure that the container dimensions are integers
+        container['width'] = int(container['width'])
+        container['height'] = int(container['height'])
+        container['depth'] = int(container['depth'])
+
         items = data["items"]
         if not items or not isinstance(items, list):
             return jsonify({"status": "error", "message": "No items provided or invalid items format"}), 400
@@ -32,19 +37,30 @@ def optimize():
             if "width" not in dim or "height" not in dim or "depth" not in dim:
                 return jsonify({"status": "error", "message": "Item dimensions incomplete"}), 400
 
+            # Ensure item dimensions are integers
+            dim['width'] = int(dim['width'])
+            dim['height'] = int(dim['height'])
+            dim['depth'] = int(dim['depth'])
+
         # Optional configuration
         config = data.get("config", None)
 
-        if not config:
+        # Set default values if config is None or contains invalid/empty values
+        if not config or not isinstance(config, dict):
             config = {
                 "population_size": 30,
                 "generations": 50
             }
+        else:
+            config["population_size"] = int(
+                config.get("population_size", 30) or 30)
+            config["generations"] = int(config.get("generations", 50) or 50)
 
         optimizer = Optimizer(container, items)
 
         # Perform optimization
-        result = optimizer.genetic_algorithm(config["population_size"], config["generations"])
+        result = optimizer.genetic_algorithm(
+            config["population_size"], config["generations"])
 
         return jsonify(result)
 
