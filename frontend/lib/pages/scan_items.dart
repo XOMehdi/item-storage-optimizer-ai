@@ -7,8 +7,11 @@ import 'dart:io';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:image/image.dart' as img;
-import 'preferences.dart';
-import 'setup_refrence_object.dart';
+import 'package:frontend/pages/preferences.dart';
+import 'package:frontend/pages/setup_refrence_object.dart';
+import 'package:frontend/models/measurement_results.dart';
+import 'package:frontend/pages/scan_Storage_space.dart';
+
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -26,6 +29,7 @@ class ScanItemsPageState extends State<ScanItemsPage> {
   CameraController? _controller;
   bool _isCameraInitialized = false;
   int dimensionCounter = 0;
+  int _itemCounter = 0;
   final String? _refObjPos = ReferenceObject().referenceObjectPosition;
   final double? _refObjWidthReal = ReferenceObject().referenceObjectWidth;
   final double? _refObjHeightReal = ReferenceObject().referenceObjectHeight;
@@ -115,6 +119,22 @@ class ScanItemsPageState extends State<ScanItemsPage> {
       });
     } catch (e) {
       log('Error capturing image: $e', name: 'ImageCapture');
+
+      if (!mounted) return;
+      showDialog(
+        context: context,
+        builder:
+            (context) => AlertDialog(
+              title: const Text('Error'),
+              content: Text('Failed to capture image: $e'),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text('OK'),
+                ),
+              ],
+            ),
+      );
     }
   }
 
@@ -169,28 +189,33 @@ class ScanItemsPageState extends State<ScanItemsPage> {
     }
   }
 
-  void _changeDimension() {
+  void _scanCompleted() {
     if (_scannedItems.length >= 2) {
       showDialog(
         context: context,
         builder:
             (context) => AlertDialog(
-              title: const Text('Images Complete'),
+              title: const Text('All Items Scanned'),
               content: const Text(
-                'You have captured both images. Click Scan Item to proceed.',
+                'All items have been scanned successfully. Please proceed to the next step.',
               ),
               actions: [
                 TextButton(
-                  onPressed: () => Navigator.pop(context),
+                  onPressed: () {
+                    Navigator.pop(context); // Close the dialog
+                    // Navigate to the Scan Storage Space page
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => ScanStorageSpacePage(),
+                      ),
+                    );
+                  },
                   child: const Text('OK'),
                 ),
               ],
             ),
       );
-    } else if (dimensionCounter < 1) {
-      setState(() {
-        dimensionCounter++;
-      });
     }
   }
 
@@ -220,6 +245,7 @@ class ScanItemsPageState extends State<ScanItemsPage> {
       return;
     }
 
+    _itemCounter++;
     await _sendToApi();
   }
 
@@ -298,6 +324,13 @@ class ScanItemsPageState extends State<ScanItemsPage> {
       if (response.statusCode == 200) {
         final result = jsonDecode(response.body);
         if (result is Map<String, dynamic>) {
+          MeasurementResults().addItemData(
+            _itemCounter,
+            result['width'],
+            result['height'],
+            result['depth'],
+          );
+
           showDialog(
             context: context,
             builder:
@@ -714,14 +747,14 @@ class ScanItemsPageState extends State<ScanItemsPage> {
                 children: [
                   _buildActionButton(
                     onTap: _scanItem,
-                    icon: 'assets/icons/correct.svg',
+                    icon: 'assets/icons/scan.svg',
                     label: 'Scan Item',
                     isSmallScreen: isSmallScreen,
                   ),
                   _buildActionButton(
-                    onTap: _changeDimension,
-                    icon: 'assets/icons/change.svg',
-                    label: 'Change Dimension',
+                    onTap: _scanCompleted,
+                    icon: 'assets/icons/correct.svg',
+                    label: 'Finish Scan',
                     isSmallScreen: isSmallScreen,
                   ),
                   _buildActionButton(
@@ -770,67 +803,5 @@ class ScanItemsPageState extends State<ScanItemsPage> {
         ),
       ),
     );
-  }
-}
-
-class PolygonPainter extends CustomPainter {
-  final List<List<Offset>> polygons;
-  final List<Offset> currentPolygon;
-  final bool drawSelection;
-
-  PolygonPainter({
-    required this.polygons,
-    required this.currentPolygon,
-    required this.drawSelection,
-  });
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    if (!drawSelection) return;
-
-    Paint completedPaint =
-        Paint()
-          ..color = Colors.green
-          ..strokeWidth = 2.0
-          ..style = PaintingStyle.stroke;
-
-    for (var polygon in polygons) {
-      if (polygon.length >= 2) {
-        Path path = Path();
-        path.moveTo(polygon[0].dx, polygon[0].dy);
-        for (int i = 1; i < polygon.length; i++) {
-          path.lineTo(polygon[i].dx, polygon[i].dy);
-        }
-        path.close();
-        canvas.drawPath(path, completedPaint);
-        for (var point in polygon) {
-          canvas.drawCircle(point, 5, Paint()..color = Colors.green);
-        }
-      }
-    }
-
-    if (currentPolygon.isNotEmpty) {
-      Paint currentPaint =
-          Paint()
-            ..color = Colors.yellow
-            ..strokeWidth = 2.0
-            ..style = PaintingStyle.stroke;
-      Path path = Path();
-      path.moveTo(currentPolygon[0].dx, currentPolygon[0].dy);
-      for (int i = 1; i < currentPolygon.length; i++) {
-        path.lineTo(currentPolygon[i].dx, currentPolygon[i].dy);
-      }
-      canvas.drawPath(path, currentPaint);
-      for (var point in currentPolygon) {
-        canvas.drawCircle(point, 5, Paint()..color = Colors.yellow);
-      }
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant PolygonPainter oldDelegate) {
-    return oldDelegate.polygons != polygons ||
-        oldDelegate.currentPolygon != currentPolygon ||
-        oldDelegate.drawSelection != drawSelection;
   }
 }

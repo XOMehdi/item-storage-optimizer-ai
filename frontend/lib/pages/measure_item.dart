@@ -5,7 +5,7 @@ import 'package:camera/camera.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'setup_refrence_object.dart';
+import 'package:frontend/pages/setup_refrence_object.dart';
 
 class MeasureItem extends StatefulWidget {
   const MeasureItem({super.key});
@@ -82,14 +82,11 @@ class MeasureItemState extends State<MeasureItem> {
         final imageBytes = await image.readAsBytes();
         final imageB64 = base64Encode(imageBytes);
         setState(() {
-            _imageB64 = imageB64;
+          _imageB64 = imageB64;
         });
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Image is set.',
-            ),
-          ),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Image is set.')));
       }
     } catch (e) {
       log('Error capturing image: $e');
@@ -112,11 +109,11 @@ class MeasureItemState extends State<MeasureItem> {
   }
 
   Future<void> _confirmAction() async {
-      if (_imageB64 == null) {
-        _showErrorDialog('Please set the image.');
-        return;
-      }
-      await _sendToApi();
+    if (_imageB64 == null) {
+      _showErrorDialog('Please set the image.');
+      return;
+    }
+    await _sendToApi();
   }
 
   Future<void> _sendToApi() async {
@@ -127,7 +124,7 @@ class MeasureItemState extends State<MeasureItem> {
       "ref_obj_pos": _refObjPos,
       "ref_obj_width_real": _refObjWidthReal,
       "ref_obj_height_real": _refObjHeightReal,
-      "polygons_image": null
+      "polygons_image": null,
     };
 
     try {
@@ -163,7 +160,7 @@ class MeasureItemState extends State<MeasureItem> {
                         children: [
                           Text(
                             'Width: ${result['width']} units\n'
-                            'Height: ${result['height']} units\n'
+                            'Height: ${result['height']} units\n',
                           ),
                           const SizedBox(height: 10),
                           if (result.containsKey('annotated_image') &&
@@ -233,96 +230,100 @@ class MeasureItemState extends State<MeasureItem> {
         keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
         child: Padding(
           padding: const EdgeInsets.all(20.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Text('Capture Image',
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 20),
-              if (_controller != null && _controller!.value.isInitialized)
-                SizedBox(
-                  height: MediaQuery.of(context).size.height * 0.44,
-                  width: MediaQuery.of(context).size.width * 0.8,
-                  child: CameraPreview(_controller!),
-                )
-              else
-                Container(
-                  height: MediaQuery.of(context).size.height * 0.44,
-                  width: MediaQuery.of(context).size.width * 0.8,
-                  color: Colors.grey,
-                  child: const Center(child: CircularProgressIndicator()),
-                ),
-              const SizedBox(height: 20),
-              ElevatedButton.icon(
-                onPressed: () => _captureImage(true),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xff4CAF50),
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 30,
-                    vertical: 12,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
-                icon: SvgPicture.asset(
-                  'assets/icons/camera1.svg',
-                  height: 24,
-                  width: 24,
-                  color: Colors.black,
-                ),
-                label: const Text(
-                  'Take Snapshot',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-                ),
-              ),
-              const SizedBox(height: 20),
-              ElevatedButton.icon(
-                onPressed: () => _captureImage(false),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xff4CAF50),
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 30,
-                    vertical: 12,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
-                icon: const Icon(Icons.photo_library, color: Colors.black),
-                label: const Text(
-                  'Select from Gallery',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-                ),
-              ),
-              const SizedBox(height: 40),
-              ElevatedButton(
-                onPressed: _confirmAction,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xff2196F3),
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 40,
-                    vertical: 15,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
-                child: Text('Confirm and Process',
+          child: Center(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Text(
+                  'Capture Image',
                   style: const TextStyle(
-                    fontSize: 16,
+                    fontSize: 18,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-              ),
-            ],
+                const SizedBox(height: 20),
+                if (_controller != null && _controller!.value.isInitialized)
+                  SizedBox(
+                    height: MediaQuery.of(context).size.height * 0.44,
+                    width: MediaQuery.of(context).size.width * 0.8,
+                    child: CameraPreview(_controller!),
+                  )
+                else
+                  Container(
+                    height: MediaQuery.of(context).size.height * 0.44,
+                    width: MediaQuery.of(context).size.width * 0.8,
+                    color: Colors.grey,
+                    child: const Center(child: CircularProgressIndicator()),
+                  ),
+                const SizedBox(height: 20),
+                ElevatedButton.icon(
+                  onPressed: () => _captureImage(true),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xff4CAF50),
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 30,
+                      vertical: 12,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                  icon: SvgPicture.asset(
+                    'assets/icons/camera1.svg',
+                    height: 24,
+                    width: 24,
+                    color: Colors.black,
+                  ),
+                  label: const Text(
+                    'Take Snapshot',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                ElevatedButton.icon(
+                  onPressed: () => _captureImage(false),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xff4CAF50),
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 30,
+                      vertical: 12,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                  icon: const Icon(Icons.photo_library, color: Colors.black),
+                  label: const Text(
+                    'Select from Gallery',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                  ),
+                ),
+                const SizedBox(height: 40),
+                ElevatedButton(
+                  onPressed: _confirmAction,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xff2196F3),
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 40,
+                      vertical: 15,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                  child: Text(
+                    'Confirm and Process',
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
