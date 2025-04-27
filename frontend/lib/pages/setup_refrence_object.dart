@@ -225,7 +225,7 @@ class SetupReferenceObjectState extends State<SetupReferenceObject> {
             borderRadius: BorderRadius.circular(10),
           ),
           child: SvgPicture.asset(
-            'assets/icons/Arrow.svg',
+            'assets/icons/arrow.svg',
             height: 20,
             width: 20,
           ),

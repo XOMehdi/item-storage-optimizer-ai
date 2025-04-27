@@ -7,12 +7,11 @@ import 'dart:io';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:image/image.dart' as img;
+import 'package:frontend/pages/home_page.dart';
 import 'package:frontend/models/preferences.dart';
 import 'package:frontend/models/reference_object.dart';
 import 'package:frontend/models/measurement_results.dart';
-import 'package:frontend/pages/scan_storage_space.dart';
 import 'package:frontend/models/polygon_painter.dart';
-
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -203,12 +202,11 @@ class ScanItemsPageState extends State<ScanItemsPage> {
               actions: [
                 TextButton(
                   onPressed: () {
-                    Navigator.pop(context); // Close the dialog
-                    // Navigate to the Scan Storage Space page
+                    Navigator.pop(context);
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => ScanStorageSpacePage(),
+                        builder: (context) => HomePage(),
                       ),
                     );
                   },
@@ -524,7 +522,7 @@ class ScanItemsPageState extends State<ScanItemsPage> {
               borderRadius: BorderRadius.circular(10),
             ),
             child: SvgPicture.asset(
-              'assets/icons/Arrow.svg',
+              'assets/icons/arrow.svg',
               height: 18,
               width: 18,
               fit: BoxFit.contain,

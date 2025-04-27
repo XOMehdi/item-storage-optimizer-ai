@@ -1,11 +1,10 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:webview_flutter/webview_flutter.dart';
+import 'package:frontend/models/measurement_results.dart';
 
 class VisualizerPage extends StatefulWidget {
-  final List<List<num>> placements;
-
-  const VisualizerPage({super.key, required this.placements});
+  const VisualizerPage({super.key});
 
   @override
   State<VisualizerPage> createState() => _VisualizerPageState();
@@ -18,7 +17,13 @@ class _VisualizerPageState extends State<VisualizerPage> {
   void initState() {
     super.initState();
 
-    final visualizerUrl = _generateVisualizerUrl(widget.placements);
+    final placements = MeasurementResults().placements ?? [];
+
+    print("visual placements: $placements");
+
+    final container = MeasurementResults().data?['container'];
+
+    final visualizerUrl = _generateVisualizerUrl(container, placements);
 
     _controller =
         WebViewController()
@@ -26,9 +31,23 @@ class _VisualizerPageState extends State<VisualizerPage> {
           ..loadRequest(Uri.parse(visualizerUrl));
   }
 
-  String _generateVisualizerUrl(List<List<num>> placements) {
-    final encodedData = Uri.encodeComponent(jsonEncode(placements));
-    return 'https://xomehdi.github.io/item-storage-optimizer-ai/index.html?data=$encodedData';
+  String _generateVisualizerUrl(
+    Map<String, dynamic>? container,
+    List<List<num>> placements,
+  ) {
+    if (container == null) return '';
+
+    // Extract width, height, depth into a list
+    final containerData = [
+      container['width'] ?? 0,
+      container['height'] ?? 0,
+      container['depth'] ?? 0,
+    ];
+
+    final encodedContainer = Uri.encodeComponent(jsonEncode(containerData));
+    final encodedPlacements = Uri.encodeComponent(jsonEncode(placements));
+
+    return 'https://xomehdi.github.io/item-storage-optimizer-ai/index.html?container=$encodedContainer&placements=$encodedPlacements';
   }
 
   @override

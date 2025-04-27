@@ -2,6 +2,7 @@ import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:camera/camera.dart';
+import 'package:frontend/pages/home_page.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
@@ -189,6 +190,12 @@ class MeasureItemPageState extends State<MeasureItemPage> {
                         setState(() {
                           _imageB64 = null;
                         });
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const HomePage(),
+                          ),
+                        );
                       },
                       child: const Text('OK'),
                     ),
@@ -353,7 +360,7 @@ class MeasureItemPageState extends State<MeasureItemPage> {
             borderRadius: BorderRadius.circular(10),
           ),
           child: SvgPicture.asset(
-            'assets/icons/Arrow.svg',
+            'assets/icons/arrow.svg',
             height: 20,
             width: 20,
           ),

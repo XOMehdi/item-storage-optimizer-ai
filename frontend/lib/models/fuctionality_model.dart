@@ -33,7 +33,19 @@ class FunctionalityModel {
       ),
       FunctionalityModel(
         name: 'Scan Storage Space',
-        iconPath: 'assets/icons/box.svg',
+        iconPath: 'assets/icons/suitcase.svg',
+        buttonPath: 'assets/icons/button.svg',
+        boxIsSelected: false,
+      ),
+      FunctionalityModel(
+        name: 'Start Optimization',
+        iconPath: 'assets/icons/optimize.svg',
+        buttonPath: 'assets/icons/button.svg',
+        boxIsSelected: false,
+      ),
+      FunctionalityModel(
+        name: 'Visualize Packing',
+        iconPath: 'assets/icons/visualize.svg',
         buttonPath: 'assets/icons/button.svg',
         boxIsSelected: false,
       ),

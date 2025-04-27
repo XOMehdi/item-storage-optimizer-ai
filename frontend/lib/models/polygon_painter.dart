@@ -20,7 +20,7 @@ class PolygonPainter extends CustomPainter {
     // Paint for completed polygons
     final completedPaint =
         Paint()
-          ..color = Colors.green.withOpacity(0.8)
+          ..color = Colors.green.withAlpha((0.8 * 255).toInt())
           ..strokeWidth = 3.0
           ..style = PaintingStyle.stroke;
 
@@ -32,7 +32,7 @@ class PolygonPainter extends CustomPainter {
     // Paint for in-progress polygon
     final currentPaint =
         Paint()
-          ..color = Colors.yellow.withOpacity(0.8)
+          ..color = Colors.yellow.withAlpha((0.8 * 255).toInt())
           ..strokeWidth = 3.0
           ..style = PaintingStyle.stroke;
 
@@ -81,7 +81,7 @@ class PolygonPainter extends CustomPainter {
       if (currentPolygon.length >= 3) {
         final dashPaint =
             Paint()
-              ..color = Colors.yellow.withOpacity(0.5)
+              ..color = Colors.yellow.withAlpha((0.5 * 255).toInt())
               ..strokeWidth = 2.0
               ..style = PaintingStyle.stroke;
 

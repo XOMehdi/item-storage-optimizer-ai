@@ -7,6 +7,7 @@ import 'dart:io';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:image/image.dart' as img;
+import 'package:frontend/pages/home_page.dart';
 import 'package:frontend/models/preferences.dart';
 import 'package:frontend/models/reference_object.dart';
 import 'package:frontend/models/measurement_results.dart';
@@ -367,7 +368,15 @@ class ScanStorageSpacePageState extends State<ScanStorageSpacePage> {
                   ),
                   actions: [
                     TextButton(
-                      onPressed: () => Navigator.pop(context),
+                      onPressed: () {
+                        Navigator.pop(context);
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => HomePage(),
+                          ),
+                        );
+                      },
                       child: const Text('OK'),
                     ),
                   ],
@@ -507,7 +516,7 @@ class ScanStorageSpacePageState extends State<ScanStorageSpacePage> {
               borderRadius: BorderRadius.circular(10),
             ),
             child: SvgPicture.asset(
-              'assets/icons/Arrow.svg',
+              'assets/icons/arrow.svg',
               height: 18,
               width: 18,
               fit: BoxFit.contain,

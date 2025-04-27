@@ -4,8 +4,9 @@ import 'package:frontend/pages/setup_refrence_object.dart';
 import 'package:frontend/pages/measure_item_page.dart';
 import 'package:frontend/pages/scan_items.dart';
 import 'package:frontend/pages/scan_storage_space.dart';
+import 'package:frontend/pages/optimizer_page.dart';
 import 'package:frontend/pages/preferences_page.dart';
-import 'package:frontend/pages/api_loader_page.dart';
+import 'package:frontend/pages/visualizer_page.dart';
 
 void main() {
   runApp(const MyApp());
@@ -37,12 +38,13 @@ class MyApp extends StatelessWidget {
       ),
       home: HomePage(),
       routes: {
-        '/setupReferenceObject': (context) => SetupReferenceObject(),
-        '/measureItem': (context) => MeasureItemPage(),
-        '/scanItems': (context) => ScanItemsPage(),
-        '/scanStorageSpace': (context) => ScanStorageSpacePage(),
-        '/preferences': (context) => PreferencesPage(),
-        '/apiLoaderPage': (context) => ApiLoaderPage(),
+        '/setupReferenceObjectPage': (context) => SetupReferenceObject(),
+        '/measureItemPage': (context) => MeasureItemPage(),
+        '/scanItemsPage': (context) => ScanItemsPage(),
+        '/scanStorageSpacePage': (context) => ScanStorageSpacePage(),
+        '/preferencesPage': (context) => PreferencesPage(),
+        '/optimizerPage': (context) => OptimizerPage(),
+        '/visualizerPage': (context) => VisualizerPage(),
       },
     );
   }

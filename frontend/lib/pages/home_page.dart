@@ -16,11 +16,13 @@ class HomePageState extends State<HomePage> {
       FunctionalityModel.getFunctionalities();
 
   final Map<String, String> routes = {
-    'Setup Reference Object': '/setupReferenceObject',
-    'Measure Item': '/measureItem',
-    'Scan Item': '/scanItems',
-    'Scan Storage Space': '/scanStorageSpace',
-    'Preferences': '/preferences',
+    'Setup Reference Object': '/setupReferenceObjectPage',
+    'Measure Item': '/measureItemPage',
+    'Scan Item': '/scanItemsPage',
+    'Scan Storage Space': '/scanStorageSpacePage',
+    'Start Optimization': '/optimizerPage',
+    'Visualize Packing': '/visualizerPage',
+    'Preferences': '/preferencesPage',
   };
 
   late TutorialCoachMark tutorialCoachMark;
