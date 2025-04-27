@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
-import 'pages/home.dart';
-import 'pages/setup_refrence_object.dart';
-import 'pages/measure_item.dart';
-import 'pages/scan_items.dart';
-import 'pages/scan_storage_space.dart';
-import 'pages/preferences.dart';
-import 'pages/api_loader_page.dart';
+import 'package:frontend/pages/home_page.dart';
+import 'package:frontend/pages/setup_refrence_object.dart';
+import 'package:frontend/pages/measure_item_page.dart';
+import 'package:frontend/pages/scan_items.dart';
+import 'package:frontend/pages/scan_storage_space.dart';
+import 'package:frontend/pages/preferences_page.dart';
+import 'package:frontend/pages/api_loader_page.dart';
 
 void main() {
   runApp(const MyApp());
@@ -38,7 +38,7 @@ class MyApp extends StatelessWidget {
       home: HomePage(),
       routes: {
         '/setupReferenceObject': (context) => SetupReferenceObject(),
-        '/measureItem': (context) => MeasureItem(),
+        '/measureItem': (context) => MeasureItemPage(),
         '/scanItems': (context) => ScanItemsPage(),
         '/scanStorageSpace': (context) => ScanStorageSpacePage(),
         '/preferences': (context) => PreferencesPage(),

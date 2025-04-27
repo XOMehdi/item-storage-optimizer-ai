@@ -1,15 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-
-class Preferences {
-  static final Preferences _instance = Preferences._internal();
-  factory Preferences() => _instance;
-  Preferences._internal();
-
-  String measurementUnit = 'centimeter';
-  bool drawSelection = false;
-  bool showOutput = true;
-}
+import 'package:frontend/models/preferences.dart';
 
 class PreferencesPage extends StatefulWidget {
   const PreferencesPage({super.key});

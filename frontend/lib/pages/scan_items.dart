@@ -7,10 +7,11 @@ import 'dart:io';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:image/image.dart' as img;
-import 'package:frontend/pages/preferences.dart';
-import 'package:frontend/pages/setup_refrence_object.dart';
+import 'package:frontend/models/preferences.dart';
+import 'package:frontend/models/reference_object.dart';
 import 'package:frontend/models/measurement_results.dart';
-import 'package:frontend/pages/scan_Storage_space.dart';
+import 'package:frontend/pages/scan_storage_space.dart';
+import 'package:frontend/models/polygon_painter.dart';
 
 
 void main() async {

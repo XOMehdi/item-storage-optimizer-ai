@@ -5,16 +5,16 @@ import 'package:camera/camera.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:frontend/pages/setup_refrence_object.dart';
+import 'package:frontend/models/reference_object.dart';
 
-class MeasureItem extends StatefulWidget {
-  const MeasureItem({super.key});
+class MeasureItemPage extends StatefulWidget {
+  const MeasureItemPage({super.key});
 
   @override
-  MeasureItemState createState() => MeasureItemState();
+  MeasureItemPageState createState() => MeasureItemPageState();
 }
 
-class MeasureItemState extends State<MeasureItem> {
+class MeasureItemPageState extends State<MeasureItemPage> {
   CameraController? _controller;
   String? _imageB64;
   final String? _refObjPos = ReferenceObject().referenceObjectPosition;
@@ -383,5 +383,5 @@ class MeasureItemState extends State<MeasureItem> {
 }
 
 void main() {
-  runApp(MaterialApp(home: MeasureItem()));
+  runApp(MaterialApp(home: MeasureItemPage()));
 }

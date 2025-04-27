@@ -1,17 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:frontend/pages/home.dart';
-import 'preferences.dart';
-
-class ReferenceObject {
-  static final ReferenceObject _instance = ReferenceObject._internal();
-  factory ReferenceObject() => _instance;
-  ReferenceObject._internal();
-
-  String? referenceObjectPosition;
-  double? referenceObjectWidth;
-  double? referenceObjectHeight;
-}
+import 'package:frontend/pages/home_page.dart';
+import 'package:frontend/models/preferences.dart';
+import 'package:frontend/models/reference_object.dart';
 
 class SetupReferenceObject extends StatefulWidget {
   const SetupReferenceObject({super.key});
