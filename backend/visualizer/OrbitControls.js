@@ -139,3 +139,5 @@ class OrbitControls {
         return true;
     }
 }
+
+export default OrbitControls;

@@ -1,5 +1,5 @@
-import { OrbitControls } from './OrbitControls.js';
-import { TouchControls } from './TouchControls.js';
+import OrbitControls from './OrbitControls.js';
+import TouchControls from './TouchControls.js';
 
 
 // Initialize scene, camera, and renderer

@@ -210,3 +210,5 @@ class TouchControls {
         return true;
     }
 }
+
+export default TouchControls;
