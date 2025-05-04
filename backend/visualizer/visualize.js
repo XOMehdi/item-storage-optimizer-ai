@@ -98,13 +98,41 @@ for (let i = 0; i < items.length; i++) {
     const [id, x, y, z, w, h, d] = item;
     const geometry = new THREE.BoxGeometry(w, h, d);
 
-    // Use a different color for each box
+    // Base color
     const colorIndex = i % colors.length;
-    const material = new THREE.MeshStandardMaterial({
-        color: colors[colorIndex],
-        transparent: true,
-        opacity: 0.8
-    });
+    const baseColor = new THREE.Color(colors[colorIndex]);
+
+    // Create canvas for ID label
+    const canvas = document.createElement('canvas');
+    canvas.width = 128;
+    canvas.height = 128;
+    const ctx = canvas.getContext('2d');
+
+    // Draw label background
+    ctx.fillStyle = baseColor.getStyle();
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // Draw ID text
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 48px Arial';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(`#${id}`, canvas.width / 2, canvas.height / 2);
+
+    const texture = new THREE.CanvasTexture(canvas);
+
+    // Use same color for side faces, ID texture on top
+    const materials = [
+        new THREE.MeshStandardMaterial({ color: baseColor }), // right
+        new THREE.MeshStandardMaterial({ color: baseColor }), // left
+        new THREE.MeshStandardMaterial({ color: baseColor }), // top (will be replaced)
+        new THREE.MeshStandardMaterial({ color: baseColor }), // bottom
+        new THREE.MeshStandardMaterial({ color: baseColor }), // front
+        new THREE.MeshStandardMaterial({ color: baseColor })  // back
+    ];
+
+    // Set ID texture on top face (index 2)
+    materials[2] = new THREE.MeshStandardMaterial({ map: texture });
 
     const mesh = new THREE.Mesh(geometry, material);
     mesh.position.set(x + w / 2, y + h / 2, z + d / 2);
