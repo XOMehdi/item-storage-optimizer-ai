@@ -134,7 +134,7 @@ for (let i = 0; i < items.length; i++) {
     // Set ID texture on top face (index 2)
     materials[2] = new THREE.MeshStandardMaterial({ map: texture });
 
-    const mesh = new THREE.Mesh(geometry, material);
+    const mesh = new THREE.Mesh(geometry, materials);
     mesh.position.set(x + w / 2, y + h / 2, z + d / 2);
     mesh.visible = false;
     scene.add(mesh);
