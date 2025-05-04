@@ -1,7 +1,6 @@
 import OrbitControls from './OrbitControls.js';
 import TouchControls from './TouchControls.js';
 
-
 // Initialize scene, camera, and renderer
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0xf0f0f0);
@@ -9,7 +8,6 @@ const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerH
 camera.position.set(50, 50, 50);
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
-renderer.setPixelRatio(window.devicePixelRatio);
 document.body.appendChild(renderer.domElement);
 
 // Detect device type and set controls
@@ -18,17 +16,20 @@ const controls = isMobile
     ? new TouchControls(camera, renderer.domElement)
     : new OrbitControls(camera, renderer.domElement);
 
+controls.target = new THREE.Vector3(20, 20, 20); // Center the view on the container
+controls.update();
+
 // Lighting
-const light = new THREE.AmbientLight(0xffffff, 0.6);
+const light = new THREE.AmbientLight(0xffffff, 0.8);
 scene.add(light);
 const directional = new THREE.DirectionalLight(0xffffff, 0.8);
-directional.position.set(20, 40, 30);
+directional.position.set(10, 20, 10);
 scene.add(directional);
 
 // Get data from URL
 const urlParams = new URLSearchParams(window.location.search);
 let items = [];
-let containerDimensions = [30, 20, 10]; // Default dimensions
+let containerDimensions = [];
 try {
     const containerParam = urlParams.get("container");
     const placementsParam = urlParams.get("placements");
@@ -72,77 +73,55 @@ const container = new THREE.BoxGeometry(containerWidth, containerHeight, contain
 const wireframe = new THREE.EdgesGeometry(container);
 const lineMaterial = new THREE.LineBasicMaterial({ color: 0x333333 });
 const boxOutline = new THREE.LineSegments(wireframe, lineMaterial);
-boxOutline.position.set(containerWidth / 2, containerHeight / 2, containerDepth / 2);
+boxOutline.position.set(20, 20, 20); // Center the container
 scene.add(boxOutline);
 
-// Colors
-const colors = [0x3498db, 0xe74c3c, 0x2ecc71, 0xf39c12, 0x9b59b6, 0x1abc9c, 0xd35400, 0x34495e];
+// Create colored materials for boxes
+const colors = [
+    0x3498db, // Blue
+    0xe74c3c, // Red
+    0x2ecc71, // Green
+    0xf39c12, // Orange
+    0x9b59b6, // Purple
+    0x1abc9c, // Teal
+    0xd35400, // Dark Orange
+    0x34495e  // Dark Blue
+];
 
 let meshes = [];
-let labels = [];
 
-// Utility to create ID labels
-function createTextSprite(message) {
-    const canvas = document.createElement('canvas');
-    const context = canvas.getContext('2d');
-    const fontSize = 40;
-    context.font = `${fontSize}px Arial`;
-    context.fillStyle = 'black';
-    context.fillText(message, 10, fontSize);
-
-    const texture = new THREE.CanvasTexture(canvas);
-    const spriteMaterial = new THREE.SpriteMaterial({ map: texture, transparent: true });
-    const sprite = new THREE.Sprite(spriteMaterial);
-    sprite.scale.set(10, 5, 1); // Adjust as needed
-    return sprite;
-}
-
-// Create box meshes with labels
+// Create box meshes
 for (let i = 0; i < items.length; i++) {
     const item = items[i];
-    if (!item || item.length < 7) continue;
+    if (!item || item.length < 7) continue; // Skip invalid items
 
     const [id, x, y, z, w, h, d] = item;
     const geometry = new THREE.BoxGeometry(w, h, d);
+
+    // Use a different color for each box
     const colorIndex = i % colors.length;
     const material = new THREE.MeshStandardMaterial({
         color: colors[colorIndex],
         transparent: true,
-        opacity: 0.85
+        opacity: 0.8
     });
 
-    const containerPos = boxOutline.position;
     const mesh = new THREE.Mesh(geometry, material);
-    mesh.position.set(
-        containerPos.x + x + w / 2,
-        containerPos.y + y + h / 2,
-        containerPos.z + z + d / 2
-    );
+    mesh.position.set(x + w / 2, y + h / 2, z + d / 2);
     mesh.visible = false;
-
-    const label = createTextSprite(id.toString());
-    label.position.set(
-        mesh.position.x,
-        mesh.position.y + h / 2 + 2,
-        mesh.position.z
-    );
-    label.visible = false;
-
     scene.add(mesh);
-    scene.add(label);
-
     meshes.push(mesh);
-    labels.push(label);
 }
 
 // Animation controls
 let currentIndex = 0;
 let isPlaying = false;
 let interval;
-const animationSpeed = 300;
+const animationSpeed = 1000;
 
 function updateCounter() {
-    document.getElementById('currentItem').textContent = currentIndex + " / " + meshes.length;
+    document.getElementById('currentItem').textContent =
+        currentIndex + " / " + meshes.length;
 }
 
 function play() {
@@ -153,13 +132,12 @@ function play() {
     interval = setInterval(() => {
         if (currentIndex < meshes.length) {
             meshes[currentIndex].visible = true;
-            labels[currentIndex].visible = true;
             currentIndex++;
             updateCounter();
         } else {
             pause();
         }
-    }, animationSpeed);
+    }, 700);
 }
 
 function pause() {
@@ -171,10 +149,7 @@ function pause() {
 
 function rewind() {
     pause();
-    for (let i = 0; i < meshes.length; i++) {
-        meshes[i].visible = false;
-        labels[i].visible = false;
-    }
+    for (let mesh of meshes) mesh.visible = false;
     currentIndex = 0;
     updateCounter();
     document.getElementById('pause-button').style.backgroundColor = '';
@@ -195,18 +170,17 @@ document.getElementById('help-button').addEventListener('click', function () {
     helpContent.style.display = helpContent.style.display === 'block' ? 'none' : 'block';
 });
 
-// Counter
+// Initialize counter
 updateCounter();
 
 // Animation loop
 function animate() {
     requestAnimationFrame(animate);
-    controls.update();
     renderer.render(scene, camera);
 }
 animate();
 
-// Window resize
+// Handle window resize
 window.addEventListener('resize', () => {
     camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
