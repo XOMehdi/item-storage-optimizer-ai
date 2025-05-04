@@ -1,31 +1,6 @@
 import OrbitControls from './OrbitControls.js';
 import TouchControls from './TouchControls.js';
 
-// Initialize scene, camera, and renderer
-const scene = new THREE.Scene();
-scene.background = new THREE.Color(0xf0f0f0);
-const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
-camera.position.set(50, 50, 50);
-const renderer = new THREE.WebGLRenderer({ antialias: true });
-renderer.setSize(window.innerWidth, window.innerHeight);
-document.body.appendChild(renderer.domElement);
-
-// Detect device type and set controls
-const isMobile = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-const controls = isMobile
-    ? new TouchControls(camera, renderer.domElement)
-    : new OrbitControls(camera, renderer.domElement);
-
-controls.target = new THREE.Vector3(20, 20, 20); // Center the view on the container
-controls.update();
-
-// Lighting
-const light = new THREE.AmbientLight(0xffffff, 0.8);
-scene.add(light);
-const directional = new THREE.DirectionalLight(0xffffff, 0.8);
-directional.position.set(10, 20, 10);
-scene.add(directional);
-
 // Get data from URL
 const urlParams = new URLSearchParams(window.location.search);
 let items = [];
@@ -64,16 +39,41 @@ try {
     document.getElementById('itemCount').textContent = "Error";
 }
 
-// Container wireframe
 const containerWidth = containerDimensions[0];
 const containerHeight = containerDimensions[1];
 const containerDepth = containerDimensions[2];
 
+// Initialize scene, camera, and renderer
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0xf0f0f0);
+const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+camera.position.set(50, 50, 50);
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setSize(window.innerWidth, window.innerHeight);
+document.body.appendChild(renderer.domElement);
+
+// Detect device type and set controls
+const isMobile = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+const controls = isMobile
+    ? new TouchControls(camera, renderer.domElement)
+    : new OrbitControls(camera, renderer.domElement);
+
+controls.target = new THREE.Vector3(containerWidth / 2, containerHeight / 2, containerDepth / 2); // Center the view on the container
+controls.update();
+
+// Lighting
+const light = new THREE.AmbientLight(0xffffff, 0.8);
+scene.add(light);
+const directional = new THREE.DirectionalLight(0xffffff, 0.8);
+directional.position.set(10, 20, 10);
+scene.add(directional);
+
+// Container wireframe
 const container = new THREE.BoxGeometry(containerWidth, containerHeight, containerDepth);
 const wireframe = new THREE.EdgesGeometry(container);
 const lineMaterial = new THREE.LineBasicMaterial({ color: 0x333333 });
 const boxOutline = new THREE.LineSegments(wireframe, lineMaterial);
-boxOutline.position.set(20, 20, 20); // Center the container
+boxOutline.position.set(containerWidth / 2, containerHeight / 2, containerDepth / 2);
 scene.add(boxOutline);
 
 // Create colored materials for boxes
