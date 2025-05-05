@@ -11,57 +11,59 @@
 </head>
 
 <body>
-  <!-- Loading screen -->
-  <div id="loading">
-    <div id="loading-spinner"></div>
-    <div>Loading visualization...</div>
-  </div>
-
-  <div id="info">
-    <div>Items: <span id="itemCount">0</span></div>
-    <div>Current: <span id="currentItem">0</span></div>
-  </div>
-
-  <div id="help-overlay">
-    <button id="help-button">?</button>
-    <div id="help-content">
-      <h3 style="margin-top: 0;">Touch Controls</h3>
-      <div class="help-row">
-        <div class="gesture-icon">☝️</div>
-        <div>One finger drag to rotate</div>
-      </div>
-      <div class="help-row">
-        <div class="gesture-icon">👆👆</div>
-        <div>Two finger pinch to zoom</div>
-      </div>
-      <div class="help-row">
-        <div class="gesture-icon">👆👆</div>
-        <div>Two finger drag to pan</div>
-      </div>
-      <div class="help-row">
-        <div class="gesture-icon">▶️⏸️</div>
-        <div>Play/Pause animation</div>
-      </div>
-      <div class="help-row">
-        <div class="gesture-icon">🔙</div>
-        <div>Rewind one frame</div>
-      </div>
-      <div class="help-row">
-        <div class="gesture-icon">⏮️</div>
-        <div>Reset animation</div>
+  <header>
+    <div id="info">
+      <div>Items: <span id="itemCount">0</span></div>
+      <div>Current: <span id="currentItem">0</span></div>
+    </div>
+    <h1 class="heading">Visualizer</h1>
+    <div id="help-overlay">
+      <button id="help-button">?</button>
+      <div id="help-content">
+        <h3 style="margin-top: 0;">Touch Controls</h3>
+        <div class="help-row">
+          <div class="gesture-icon">☝️</div>
+          <div>One finger drag to rotate</div>
+        </div>
+        <div class="help-row">
+          <div class="gesture-icon">👆👆</div>
+          <div>Two finger pinch to zoom</div>
+        </div>
+        <div class="help-row">
+          <div class="gesture-icon">👆👆</div>
+          <div>Two finger drag to pan</div>
+        </div>
+        <div class="help-row">
+          <div class="gesture-icon">▶️⏸️</div>
+          <div>Play/Pause animation</div>
+        </div>
+        <div class="help-row">
+          <div class="gesture-icon">🔙</div>
+          <div>Rewind one frame</div>
+        </div>
+        <div class="help-row">
+          <div class="gesture-icon">⏮️</div>
+          <div>Reset animation</div>
+        </div>
       </div>
     </div>
-  </div>
-
-  <div id="controls-container">
-    <label for="speed-range" id="speed-label">Speed: 1x</label>
-    <input type="range" id="speed-range" min="100" max="2000" value="1000" step="100">
-    <div id="controls">
-      <button class="control-button" id="stepback-button">🔙</button>
-      <button class="control-button" id="play-pause-button">▶️</button>
-      <button class="control-button" id="rewind-button">⏮️</button>
+  </header>
+  <main>
+    <div id="loading">
+      <div id="loading-spinner"></div>
+      <div>Loading visualization...</div>
     </div>
-  </div>
+
+    <div id="controls-container">
+      <label for="speed-range" id="speed-label">Speed: 1x</label>
+      <input type="range" id="speed-range" min="100" max="2000" value="1000" step="100">
+      <div id="controls">
+        <button class="control-button" id="stepback-button">🔙</button>
+        <button class="control-button" id="play-pause-button">▶️</button>
+        <button class="control-button" id="rewind-button">⏮️</button>
+      </div>
+    </div>
+  </main>
 </body>
 
 </html>

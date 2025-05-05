@@ -3,11 +3,26 @@ body {
     overflow: hidden;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
     touch-action: none;
-    /* Prevent browser handling of touch gestures */
+    text-align: center;
+    background-color: #f0f0f0;
+}
+
+header {
+    display: flex;
+    flex-flow: row nowrap;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 20px;
 }
 
 canvas {
     display: block;
+}
+
+.heading {
+    font-size: 48px;
+    font-weight: 600;
+    color: #0075ff;
 }
 
 #controls-container {
@@ -36,21 +51,11 @@ canvas {
 }
 
 #info {
-    position: absolute;
-    top: 15px;
-    left: 15px;
     background: rgba(255, 255, 255, 0.9);
     padding: 10px 15px;
     border-radius: 8px;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
     font-size: 14px;
-}
-
-/* Help overlay */
-#help-overlay {
-    position: absolute;
-    top: 15px;
-    right: 15px;
 }
 
 #help-button {
@@ -71,7 +76,7 @@ canvas {
     display: none;
     position: absolute;
     top: 80px;
-    right: 0;
+    right: 50px;
     background: rgba(255, 255, 255, 0.95);
     padding: 15px;
     border-radius: 8px;
@@ -97,7 +102,6 @@ canvas {
     font-size: 20px;
 }
 
-/* Loading indicator */
 #loading {
     position: absolute;
     top: 0;
@@ -129,5 +133,15 @@ canvas {
 
     100% {
         transform: rotate(360deg);
+    }
+}
+
+@media screen and (max-width: 400px) {
+    header {
+        padding: 0 10px;
+    }
+
+    .heading {
+        font-size: 38px;
     }
 }

@@ -76,17 +76,11 @@ const boxOutline = new THREE.LineSegments(wireframe, lineMaterial);
 boxOutline.position.set(containerWidth / 2, containerHeight / 2, containerDepth / 2);
 scene.add(boxOutline);
 
-// Create colored materials for boxes
-const colors = [
-    0x3498db, // Blue
-    0xe74c3c, // Red
-    0x2ecc71, // Green
-    0xf39c12, // Orange
-    0x9b59b6, // Purple
-    0x1abc9c, // Teal
-    0xd35400, // Dark Orange
-    0x34495e  // Dark Blue
-];
+function getColorFromIndex(index) {
+    const hue = (index * 137.508) % 360; // Golden angle approximation
+    return new THREE.Color(`hsl(${hue}, 70%, 60%)`);
+}
+
 
 let meshes = [];
 
@@ -98,9 +92,7 @@ for (let i = 0; i < items.length; i++) {
     const [id, x, y, z, w, h, d] = item;
     const geometry = new THREE.BoxGeometry(w, h, d);
 
-    // Base color
-    const colorIndex = i % colors.length;
-    const baseColor = new THREE.Color(colors[colorIndex]);
+    const baseColor = getColorFromIndex(i);
 
     // Create canvas for ID label
     const canvas = document.createElement('canvas');
@@ -131,8 +123,9 @@ for (let i = 0; i < items.length; i++) {
         new THREE.MeshStandardMaterial({ color: baseColor })  // back
     ];
 
-    // Set ID texture on top face (index 2)
+    // Set ID texture on top and bottom faces
     materials[2] = new THREE.MeshStandardMaterial({ map: texture });
+    materials[3] = new THREE.MeshStandardMaterial({ map: texture });
 
     const mesh = new THREE.Mesh(geometry, materials);
     mesh.position.set(x + w / 2, y + h / 2, z + d / 2);
