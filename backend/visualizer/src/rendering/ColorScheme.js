@@ -1,3 +1,5 @@
+import * as THREE from 'three';
+
 class ColorScheme {
     static getColorFromIndex(index) {
         const hue = (index * 137.508) % 360; // Golden angle approximation

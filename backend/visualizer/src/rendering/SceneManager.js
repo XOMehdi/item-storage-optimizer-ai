@@ -1,3 +1,4 @@
+import * as THREE from 'three';
 import Config from '../core/Config.js';
 import OrbitControls from "../controls/OrbitControls.js";
 import TouchControls from "../controls/TouchControls.js";

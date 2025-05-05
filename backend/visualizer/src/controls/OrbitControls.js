@@ -1,3 +1,5 @@
+import * as THREE from 'three';
+
 class OrbitControls {
     constructor(camera, domElement) {
         this.camera = camera;
