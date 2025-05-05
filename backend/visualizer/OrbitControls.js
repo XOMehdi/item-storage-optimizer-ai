@@ -14,7 +14,7 @@ class OrbitControls {
         this.maxDistance = Infinity;
 
         // Mouse buttons
-        this.mouseButtons = { LEFT: 0 }; // Changed from THREE.MOUSE.ROTATE
+        this.mouseButtons = { LEFT: 0 };
 
         // State
         this.isRotating = false;

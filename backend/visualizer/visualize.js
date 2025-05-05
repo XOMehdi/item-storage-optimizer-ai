@@ -142,10 +142,11 @@ for (let i = 0; i < items.length; i++) {
 }
 
 // Animation controls
+const speedRange = document.getElementById('speed-range');
 let currentIndex = 0;
 let isPlaying = false;
 let interval;
-const animationSpeed = 1000;
+let animationInterval = parseInt(speedRange.value);
 
 function updateCounter() {
     document.getElementById('currentItem').textContent =
@@ -153,10 +154,16 @@ function updateCounter() {
 }
 
 function play() {
-    if (isPlaying || currentIndex >= meshes.length) return;
+    if (currentIndex >= meshes.length) return;
+
+    if (isPlaying) {
+        pause();
+        return;
+    }
+
     isPlaying = true;
-    document.getElementById('play-button').style.backgroundColor = '#d4f7d4';
-    document.getElementById('pause-button').style.backgroundColor = '';
+    document.getElementById('play-pause-button').textContent = '▶️';
+    document.getElementById('play-pause-button').style.backgroundColor = '#d4f7d4';
     interval = setInterval(() => {
         if (currentIndex < meshes.length) {
             meshes[currentIndex].visible = true;
@@ -165,14 +172,25 @@ function play() {
         } else {
             pause();
         }
-    }, 700);
+    }, animationInterval);
 }
 
 function pause() {
     isPlaying = false;
     clearInterval(interval);
-    document.getElementById('play-button').style.backgroundColor = '';
-    document.getElementById('pause-button').style.backgroundColor = '#f7d4d4';
+    document.getElementById('play-pause-button').textContent = '⏸️';
+    document.getElementById('play-pause-button').style.backgroundColor = '';
+}
+
+function stepBack() {
+    if (currentIndex <= 0) return;
+    currentIndex--;
+    meshes[currentIndex].visible = false;
+    updateCounter();
+    document.getElementById('stepback-button').style.backgroundColor = '#f0d4f0';
+    setTimeout(() => {
+        document.getElementById('stepback-button').style.backgroundColor = '';
+    }, animationInterval);
 }
 
 function rewind() {
@@ -180,23 +198,63 @@ function rewind() {
     for (let mesh of meshes) mesh.visible = false;
     currentIndex = 0;
     updateCounter();
-    document.getElementById('pause-button').style.backgroundColor = '';
     document.getElementById('rewind-button').style.backgroundColor = '#d4d4f7';
     setTimeout(() => {
         document.getElementById('rewind-button').style.backgroundColor = '';
-    }, 300);
+    }, animationInterval);
 }
 
-// Buttons
-document.getElementById('play-button').addEventListener('click', play);
-document.getElementById('pause-button').addEventListener('click', pause);
-document.getElementById('rewind-button').addEventListener('click', rewind);
+function calculateInterval(speed) {
+    const minInterval = speedRange.min;
+    const maxInterval = speedRange.max;
 
-// Help button
-document.getElementById('help-button').addEventListener('click', function () {
+    // Ensure speed is within valid range (100 to 2000)
+    speed = Math.max(speedRange.min, Math.min(speedRange.max, speed));
+
+    // Linear interpolation: interval = maxInterval - (speed - minSpeed) * (maxInterval - minInterval) / (maxSpeed - minSpeed)
+    const interval = maxInterval - ((speed - 100) * (maxInterval - minInterval) / (2000 - 100));
+
+    // Round to nearest integer and ensure it's within bounds
+    return Math.round(interval);
+}
+
+function changeSpeed() {
+    let speed = parseInt(speedRange.value);
+    document.getElementById('speed-label').textContent = `Speed: ${speed / 1000}x`;
+
+    animationInterval = calculateInterval(speed);
+    console.log(animationInterval);
+
+    if (isPlaying) {
+        clearInterval(interval); // Clear existing interval
+        interval = setInterval(() => {
+            if (currentIndex < meshes.length) {
+                meshes[currentIndex].visible = true;
+                currentIndex++;
+                updateCounter();
+            } else {
+                pause();
+            }
+        }, animationInterval);
+    }
+}
+
+function toggleHelpContent() {
     const helpContent = document.getElementById('help-content');
     helpContent.style.display = helpContent.style.display === 'block' ? 'none' : 'block';
-});
+}
+
+function handleWindowResize() {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+}
+
+speedRange.addEventListener('change', changeSpeed);
+document.getElementById('play-pause-button').addEventListener('click', play);
+document.getElementById('stepback-button').addEventListener('click', stepBack);
+document.getElementById('rewind-button').addEventListener('click', rewind);
+document.getElementById('help-button').addEventListener('click', toggleHelpContent);
 
 // Initialize counter
 updateCounter();
@@ -209,11 +267,7 @@ function animate() {
 animate();
 
 // Handle window resize
-window.addEventListener('resize', () => {
-    camera.aspect = window.innerWidth / window.innerHeight;
-    camera.updateProjectionMatrix();
-    renderer.setSize(window.innerWidth, window.innerHeight);
-});
+window.addEventListener('resize', handleWindowResize);
 
 // Hide loading
 setTimeout(() => {

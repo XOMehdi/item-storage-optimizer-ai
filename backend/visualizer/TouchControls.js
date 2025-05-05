@@ -3,7 +3,7 @@ class TouchControls {
         this.camera = camera;
         this.domElement = domElement;
         this.enabled = true;
-        this.target = new THREE.Vector3(15, 10, 5); // Center of the container
+        this.target = new THREE.Vector3();
 
         // Current position in spherical coordinates
         this.spherical = new THREE.Spherical();

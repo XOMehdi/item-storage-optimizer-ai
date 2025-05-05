@@ -1,13 +1,15 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>3D Packing Visualizer</title>
+  <title>Visualizer</title>
   <link rel="stylesheet" href="style.css" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <script defer type="module" src="visualize.js"></script>
 </head>
+
 <body>
   <!-- Loading screen -->
   <div id="loading">
@@ -37,12 +39,12 @@
         <div>Two finger drag to pan</div>
       </div>
       <div class="help-row">
-        <div class="gesture-icon">▶️</div>
-        <div>Play animation</div>
+        <div class="gesture-icon">▶️⏸️</div>
+        <div>Play/Pause animation</div>
       </div>
       <div class="help-row">
-        <div class="gesture-icon">⏸️</div>
-        <div>Pause animation</div>
+        <div class="gesture-icon">🔙</div>
+        <div>Rewind one frame</div>
       </div>
       <div class="help-row">
         <div class="gesture-icon">⏮️</div>
@@ -51,10 +53,15 @@
     </div>
   </div>
 
-  <div id="controls">
-    <button class="control-button" id="rewind-button">⏮️</button>
-    <button class="control-button" id="play-button">▶️</button>
-    <button class="control-button" id="pause-button">⏸️</button>
+  <div id="controls-container">
+    <label for="speed-range" id="speed-label">Speed: 1x</label>
+    <input type="range" id="speed-range" min="100" max="2000" value="1000" step="100">
+    <div id="controls">
+      <button class="control-button" id="stepback-button">🔙</button>
+      <button class="control-button" id="play-pause-button">▶️</button>
+      <button class="control-button" id="rewind-button">⏮️</button>
+    </div>
   </div>
 </body>
+
 </html>
