@@ -17,7 +17,7 @@ def measure_2d():
             return jsonify({"error": "Invalid request format."}), 400
 
         # Extract data
-        image_b64 = data.get("image")
+        image_b64 = data.get("image_b64")
         ref_obj_pos = data.get("ref_obj_pos")
         ref_obj_width_real = data.get("ref_obj_width_real")
         ref_obj_height_real = data.get("ref_obj_height_real")
@@ -37,7 +37,7 @@ def measure_2d():
             return jsonify({"error": "Invalid image data."}), 400
 
         measurement_system = MeasurementSystem(
-            ref_obj_pos, ref_obj_width_real, ref_obj_height_real, [polygons_image, None])
+            ref_obj_pos, ref_obj_width_real, ref_obj_height_real, (polygons_image, None))
 
         # Perform measurement
         results = measurement_system.measure_2d_item(image, polygons_image)
@@ -60,8 +60,8 @@ def measure_3d():
             return jsonify({"error": "Invalid request format."}), 400
 
         # Extract data
-        front_image_b64 = data.get("front_image")
-        side_image_b64 = data.get("side_image")
+        front_image_b64 = data.get("front_image_b64")
+        side_image_b64 = data.get("side_image_b64")
         ref_obj_pos = data.get("ref_obj_pos")
         ref_obj_width_real = data.get("ref_obj_width_real")
         ref_obj_height_real = data.get("ref_obj_height_real")
@@ -85,7 +85,7 @@ def measure_3d():
             return jsonify({"error": "Invalid image data."}), 400
 
         measurement_system = MeasurementSystem(
-            ref_obj_pos, ref_obj_width_real, ref_obj_height_real, [polygons_front_image, polygons_side_image])
+            ref_obj_pos, ref_obj_width_real, ref_obj_height_real, (polygons_front_image, polygons_side_image))
 
         # Perform measurement
         results = measurement_system.measure_3d_item(front_image, side_image)
