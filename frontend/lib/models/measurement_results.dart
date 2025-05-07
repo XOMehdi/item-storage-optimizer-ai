@@ -7,8 +7,7 @@ class MeasurementResults {
   List<List<num>>? placements;
 
   void initializeData() {
-    data = {'container': {'width': 16, 'height': 8, 'depth': 4}, 'items': [], 'config': {}};
-    // data = {'container': {}, 'items': [], 'config': {}};
+    data = {'container': {}, 'items': [], 'config': {}};
     placements = [];
   }
 

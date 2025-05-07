@@ -13,17 +13,24 @@ class DrawingPage extends StatefulWidget {
 
 class _DrawingPageState extends State<DrawingPage> {
   final List<Offset> _points = [];
-  final List<List<Offset>> polygons = []; // Store polygons here
+  final List<List<Offset>> polygons = [];
   final GlobalKey _imageKey = GlobalKey();
   ui.Image? _image;
   Size _actualImageSize = Size.zero;
   Size _displayedImageSize = Size.zero;
   Offset _imagePosition = Offset.zero;
+  
+  // This will store the actual display rect of the image accounting for BoxFit.contain
+  Rect _imageDisplayRect = Rect.zero;
 
   @override
   void initState() {
     super.initState();
     _loadImage();
+    // Add post-frame callback to calculate image dimensions after layout
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _updateImageDimensions();
+    });
   }
 
   // Load image and get its dimensions
@@ -43,10 +50,35 @@ class _DrawingPageState extends State<DrawingPage> {
   void _updateImageDimensions() {
     final box = _imageKey.currentContext?.findRenderObject() as RenderBox?;
     if (box != null) {
-      setState(() {
-        _displayedImageSize = box.size;
-        _imagePosition = box.localToGlobal(Offset.zero);
-      });
+      // Get the container size
+      final containerSize = box.size;
+      
+      // Calculate how the image fits within the container using BoxFit.contain
+      if (_actualImageSize != Size.zero) {
+        final imageAspectRatio = _actualImageSize.width / _actualImageSize.height;
+        final containerAspectRatio = containerSize.width / containerSize.height;
+        
+        double imageWidth, imageHeight;
+        double offsetX = 0, offsetY = 0;
+        
+        if (imageAspectRatio > containerAspectRatio) {
+          // Image is wider than container (letterboxing - black bars on top and bottom)
+          imageWidth = containerSize.width;
+          imageHeight = containerSize.width / imageAspectRatio;
+          offsetY = (containerSize.height - imageHeight) / 2;
+        } else {
+          // Image is taller than container (pillarboxing - black bars on sides)
+          imageHeight = containerSize.height;
+          imageWidth = containerSize.height * imageAspectRatio;
+          offsetX = (containerSize.width - imageWidth) / 2;
+        }
+        
+        setState(() {
+          _displayedImageSize = Size(imageWidth, imageHeight);
+          _imagePosition = box.localToGlobal(Offset.zero);
+          _imageDisplayRect = Rect.fromLTWH(offsetX, offsetY, imageWidth, imageHeight);
+        });
+      }
     }
   }
 
@@ -81,14 +113,26 @@ class _DrawingPageState extends State<DrawingPage> {
 
   // Convert local coordinate to normalized coordinate based on actual image dimensions
   List<double> _normalizeCoordinate(Offset localPoint) {
-    if (_displayedImageSize == Size.zero) return [0, 0];
+    // If we don't have image dimensions yet, return a default
+    if (_actualImageSize == Size.zero || _imageDisplayRect == Rect.zero) {
+      return [0, 0];
+    }
 
-    // Calculate scaling factors between the displayed image and actual image
-    final scaleX = _actualImageSize.width / _displayedImageSize.width;
-    final scaleY = _actualImageSize.height / _displayedImageSize.height;
-
-    // Return pixel coordinates scaled to the actual image dimensions
-    return [localPoint.dx * scaleX, localPoint.dy * scaleY];
+    // Calculate the point's position relative to the actual displayed image area
+    // (accounting for letterboxing/pillarboxing)
+    final relativeX = (localPoint.dx - _imageDisplayRect.left) / _imageDisplayRect.width;
+    final relativeY = (localPoint.dy - _imageDisplayRect.top) / _imageDisplayRect.height;
+    
+    // Check if the point is within the image bounds
+    if (relativeX < 0 || relativeX > 1 || relativeY < 0 || relativeY > 1) {
+      return [0, 0]; // Point is outside the image area
+    }
+    
+    // Convert to actual image coordinates
+    final imageX = relativeX * _actualImageSize.width;
+    final imageY = relativeY * _actualImageSize.height;
+    
+    return [imageX, imageY];
   }
 
   // Finish drawing and return the polygons in the correct format
@@ -108,33 +152,34 @@ class _DrawingPageState extends State<DrawingPage> {
       return;
     }
 
-    // Convert polygons from List<Offset> to List<List<double>> with normalized coordinates
-    final formattedPolygons =
-        polygons.map((polygon) {
-          return polygon.map((point) => _normalizeCoordinate(point)).toList();
-        }).toList();
+    // Convert polygons to the format expected by the API
+    final formattedPolygons = polygons.map((polygon) {
+      return polygon.map((point) => _normalizeCoordinate(point)).toList();
+    }).toList();
 
     Navigator.pop(
       context,
       formattedPolygons,
-    ); // Pass the normalized polygons back
+    );
   }
 
   // Handle the tap gestures for drawing points
   void _onTapDown(TapDownDetails details) {
-    if (_displayedImageSize == Size.zero) {
+    // Make sure we have the latest image dimensions
+    if (_imageDisplayRect == Rect.zero) {
       _updateImageDimensions();
+      return; // Skip this tap if we're still calculating dimensions
     }
 
     final box = _imageKey.currentContext?.findRenderObject() as RenderBox?;
     if (box != null) {
       final localPos = box.globalToLocal(details.globalPosition);
-
-      // Check if the tap is within the image bounds
-      if (localPos.dx >= 0 &&
-          localPos.dx <= _displayedImageSize.width &&
-          localPos.dy >= 0 &&
-          localPos.dy <= _displayedImageSize.height) {
+      
+      // Check if the tap is within the actual displayed image area
+      if (localPos.dx >= _imageDisplayRect.left &&
+          localPos.dx <= _imageDisplayRect.right &&
+          localPos.dy >= _imageDisplayRect.top &&
+          localPos.dy <= _imageDisplayRect.bottom) {
         setState(() {
           _points.add(localPos);
         });
@@ -177,6 +222,11 @@ class _DrawingPageState extends State<DrawingPage> {
       ),
       body: LayoutBuilder(
         builder: (context, constraints) {
+          // Recalculate image dimensions on layout changes
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            _updateImageDimensions();
+          });
+          
           return GestureDetector(
             onTapDown: _onTapDown,
             child: Stack(
@@ -210,6 +260,21 @@ class _DrawingPageState extends State<DrawingPage> {
                     ),
                   ),
                 ),
+                // Add debug info to verify coordinates
+                if (_imageDisplayRect != Rect.zero)
+                  Positioned(
+                    top: 16,
+                    right: 16,
+                    child: Container(
+                      padding: const EdgeInsets.all(8),
+                      color: Colors.black54,
+                      child: Text(
+                        'Image: ${_actualImageSize.width.toInt()}x${_actualImageSize.height.toInt()}\n'
+                        'Display: ${_imageDisplayRect.width.toInt()}x${_imageDisplayRect.height.toInt()}',
+                        style: const TextStyle(color: Colors.white, fontSize: 12),
+                      ),
+                    ),
+                  ),
               ],
             ),
           );
