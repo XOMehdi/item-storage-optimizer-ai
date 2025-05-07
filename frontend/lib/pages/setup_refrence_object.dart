@@ -204,12 +204,15 @@ class SetupReferenceObjectState extends State<SetupReferenceObject> {
 
   AppBar _appBar(BuildContext context) {
     return AppBar(
-      title: const Text(
-        'Setup Reference Object',
-        style: TextStyle(
-          color: Colors.black,
-          fontSize: 18,
-          fontWeight: FontWeight.bold,
+      title: const FittedBox(
+        fit: BoxFit.scaleDown,
+        child: Text(
+          'Setup Reference Object',
+          style: TextStyle(
+            color: Colors.black,
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+          ),
         ),
       ),
       backgroundColor: Colors.white,

@@ -1,5 +1,6 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'dart:convert';
+import 'dart:developer';
 import 'package:webview_flutter/webview_flutter.dart';
 import 'package:frontend/models/measurement_results.dart';
 
@@ -19,7 +20,7 @@ class _VisualizerPageState extends State<VisualizerPage> {
 
     final placements = MeasurementResults().placements ?? [];
 
-    print("visual placements: $placements");
+    log("visual placements: $placements");
 
     final container = MeasurementResults().data?['container'];
 
@@ -53,7 +54,19 @@ class _VisualizerPageState extends State<VisualizerPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Visualizer")),
+      appBar: AppBar(
+        title: const FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Text(
+            'Visualizer',
+            style: TextStyle(
+              color: Colors.black,
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ),
+      ),
       body: WebViewWidget(controller: _controller),
     );
   }

@@ -18,7 +18,7 @@ class HomePageState extends State<HomePage> {
   final Map<String, String> routes = {
     'Setup Reference Object': '/setupReferenceObjectPage',
     'Measure Item': '/measureItemPage',
-    'Scan Item': '/scanItemsPage',
+    'Scan Items': '/scanItemsPage',
     'Scan Storage Space': '/scanStorageSpacePage',
     'Start Optimization': '/optimizerPage',
     'Visualize Packing': '/visualizerPage',
@@ -208,20 +208,6 @@ class HomePageState extends State<HomePage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const SizedBox(height: 24),
-                    const Padding(
-                      padding: EdgeInsets.only(left: 4),
-                      child: Text(
-                        'Item Storage Optimizer AI',
-                        style: TextStyle(
-                          color: Colors.black,
-                          fontSize: 22,
-                          fontWeight: FontWeight.w600,
-                        ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    const SizedBox(height: 15),
                     ListView.separated(
                       physics: const NeverScrollableScrollPhysics(),
                       itemCount: functionalities.length,
@@ -310,7 +296,7 @@ class HomePageState extends State<HomePage> {
       title: const FittedBox(
         fit: BoxFit.scaleDown,
         child: Text(
-          'Storage Optimizer',
+          'Item Storage Optimizer AI',
           style: TextStyle(
             color: Colors.black,
             fontSize: 18,

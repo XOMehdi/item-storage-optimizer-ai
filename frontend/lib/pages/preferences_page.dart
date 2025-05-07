@@ -34,12 +34,15 @@ class PreferencesPageState extends State<PreferencesPage> {
 
   AppBar _appBar(BuildContext context) {
     return AppBar(
-      title: const Text(
-        'Preferences',
-        style: TextStyle(
-          color: Colors.black,
-          fontSize: 18,
-          fontWeight: FontWeight.bold,
+      title: const FittedBox(
+        fit: BoxFit.scaleDown,
+        child: Text(
+          'Preferences',
+          style: TextStyle(
+            color: Colors.black,
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+          ),
         ),
       ),
       backgroundColor: Colors.white,

@@ -1,7 +1,6 @@
 import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:camera/camera.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 import 'dart:convert';
@@ -11,7 +10,8 @@ import 'package:frontend/pages/home_page.dart';
 import 'package:frontend/models/preferences.dart';
 import 'package:frontend/models/reference_object.dart';
 import 'package:frontend/models/measurement_results.dart';
-import 'package:frontend/models/polygon_painter.dart';
+import 'package:frontend/pages/camera_capture_page.dart';
+import 'package:frontend/pages/drawing_page.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -26,97 +26,85 @@ class ScanItemsPage extends StatefulWidget {
 }
 
 class ScanItemsPageState extends State<ScanItemsPage> {
-  CameraController? _controller;
-  bool _isCameraInitialized = false;
-  int dimensionCounter = 0;
-  int _itemCounter = 0;
   final String? _refObjPos = ReferenceObject().referenceObjectPosition;
   final double? _refObjWidthReal = ReferenceObject().referenceObjectWidth;
   final double? _refObjHeightReal = ReferenceObject().referenceObjectHeight;
 
-  File? _currentImage;
-  Size? _currentImageSize;
-  List<List<Offset>> _currentPolygons = [];
-  List<Offset> _currentPolygon = [];
-  bool isDrawingMode = false;
-  bool drawSelection = Preferences().drawSelection;
-  bool drawPolygonOrNot = false;
+  int _itemCounter = 0;
+  bool _isDrawingMode = Preferences().drawSelection;
 
   List<Map<String, dynamic>> _scannedItems = [];
 
   @override
   void initState() {
     super.initState();
-    _initializeCamera();
-  }
-
-  Future<void> _initializeCamera() async {
-    try {
-      final cameras = await availableCameras();
-      final backCamera = cameras.firstWhere(
-        (camera) => camera.lensDirection == CameraLensDirection.back,
-        orElse: () => cameras.first,
-      );
-      _controller = CameraController(backCamera, ResolutionPreset.high);
-      await _controller!.initialize();
-      if (mounted) {
-        setState(() {
-          _isCameraInitialized = true;
-        });
-      }
-    } catch (e) {
-      log('Error initializing camera: $e', name: 'CameraInitialization');
-    }
   }
 
   @override
   void dispose() {
-    _controller?.dispose();
     super.dispose();
   }
 
   Future<void> _captureImage(bool isSnapshot) async {
-    if (_controller == null || !_controller!.value.isInitialized) return;
     try {
-      XFile? image;
+      File? imageFile;
+
       if (isSnapshot) {
-        image = await _controller!.takePicture();
+        imageFile = await Navigator.push<File?>(
+          context,
+          MaterialPageRoute(builder: (_) => const CameraCapturePage()),
+        );
       } else {
         final picker = ImagePicker();
-        image = await picker.pickImage(source: ImageSource.gallery);
+        final pickedImage = await picker.pickImage(source: ImageSource.gallery);
+        if (pickedImage != null) {
+          imageFile = File(pickedImage.path);
+        }
       }
 
-      if (image == null) return;
+      if (imageFile == null) return;
 
-      final file = File(image.path);
-      final bytes = await file.readAsBytes();
-      final decodedImage = img.decodeImage(bytes);
-      if (decodedImage == null) {
-        log('Failed to decode image', name: 'ImageDecoding');
+      // ⬇️ Decode to get image size
+      final bytes = await imageFile.readAsBytes();
+      final decoded = img.decodeImage(bytes);
+      if (decoded == null) {
+        log('Image decode failed', name: 'ImageDecoding');
         return;
       }
-      final originalSize = Size(
-        decodedImage.width.toDouble(),
-        decodedImage.height.toDouble(),
+      final imageSize = Size(
+        decoded.width.toDouble(),
+        decoded.height.toDouble(),
       );
-      setState(() {
-        _currentImage = file;
-        _currentImageSize = originalSize;
-        dimensionCounter++;
-        if (drawPolygonOrNot) {
-          isDrawingMode = true;
-          _currentPolygons = [];
-          _currentPolygon = [];
-        } else {
+
+      if (_isDrawingMode) {
+        final polygons = await Navigator.push<List<List<List<double>>>?>(
+          context,
+          MaterialPageRoute(builder: (_) => DrawingPage(imageFile: imageFile!)),
+        );
+
+        if (polygons != null) {
           _scannedItems.add({
-            'image': file,
-            'polygons': null,
-            'size': originalSize,
+            'image': imageFile,
+            'polygons': polygons,
+            'size': imageSize,
           });
-          _currentImage = null;
-          _currentImageSize = null;
+          setState(() {}); // Refresh UI
+
+          // Log polygon data for debugging
+          log(
+            'Image size: ${imageSize.width} x ${imageSize.height}',
+            name: 'ImageCapture',
+          );
+          log('Polygon data: $polygons', name: 'PolygonData');
         }
-      });
+      } else {
+        _scannedItems.add({
+          'image': imageFile,
+          'polygons': null,
+          'size': imageSize,
+        });
+        setState(() {});
+      }
     } catch (e) {
       log('Error capturing image: $e', name: 'ImageCapture');
 
@@ -124,12 +112,12 @@ class ScanItemsPageState extends State<ScanItemsPage> {
       showDialog(
         context: context,
         builder:
-            (context) => AlertDialog(
+            (_) => AlertDialog(
               title: const Text('Error'),
               content: Text('Failed to capture image: $e'),
               actions: [
                 TextButton(
-                  onPressed: () => Navigator.of(context).pop(),
+                  onPressed: () => Navigator.pop(context),
                   child: const Text('OK'),
                 ),
               ],
@@ -138,59 +126,8 @@ class ScanItemsPageState extends State<ScanItemsPage> {
     }
   }
 
-  void _addPoint(Offset point) {
-    setState(() {
-      _currentPolygon.add(point);
-    });
-  }
-
-  void _completePolygon() {
-    if (_currentPolygon.length >= 3) {
-      setState(() {
-        _currentPolygons.add(List.from(_currentPolygon));
-        _currentPolygon = [];
-      });
-    }
-  }
-
-  void _undoLastPoint() {
-    setState(() {
-      if (_currentPolygon.isNotEmpty) {
-        _currentPolygon.removeLast();
-      } else if (_currentPolygons.isNotEmpty) {
-        _currentPolygon = _currentPolygons.removeLast();
-      }
-    });
-  }
-
-  void _finishDrawing() {
-    if (_currentImage != null) {
-      if (_currentPolygons.isNotEmpty || _currentPolygon.isNotEmpty) {
-        setState(() {
-          if (_currentPolygon.isNotEmpty) {
-            _currentPolygons.add(List.from(_currentPolygon));
-          }
-          _scannedItems.add({
-            'image': _currentImage!,
-            'polygons': _currentPolygons,
-            'size': _currentImageSize!,
-          });
-          isDrawingMode = false;
-          _currentImage = null;
-          _currentImageSize = null;
-          _currentPolygons = [];
-          _currentPolygon = [];
-        });
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Please draw at least one polygon')),
-        );
-      }
-    }
-  }
-
   void _scanCompleted() {
-    if (_scannedItems.length >= 2) {
+    if (_itemCounter > 0) {
       showDialog(
         context: context,
         builder:
@@ -205,11 +142,26 @@ class ScanItemsPageState extends State<ScanItemsPage> {
                     Navigator.pop(context);
                     Navigator.push(
                       context,
-                      MaterialPageRoute(
-                        builder: (context) => HomePage(),
-                      ),
+                      MaterialPageRoute(builder: (context) => HomePage()),
                     );
                   },
+                  child: const Text('OK'),
+                ),
+              ],
+            ),
+      );
+    } else {
+      showDialog(
+        context: context,
+        builder:
+            (context) => AlertDialog(
+              title: const Text('No Items Scanned'),
+              content: const Text(
+                'Please scan at least one item before finishing.',
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
                   child: const Text('OK'),
                 ),
               ],
@@ -220,7 +172,6 @@ class ScanItemsPageState extends State<ScanItemsPage> {
 
   void _nextItem() {
     setState(() {
-      dimensionCounter = 0;
       _scannedItems = [];
     });
   }
@@ -244,12 +195,6 @@ class ScanItemsPageState extends State<ScanItemsPage> {
       return;
     }
 
-    _itemCounter++;
-    await _sendToApi();
-  }
-
-  Future<void> _sendToApi() async {
-    // Show loading dialog
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -270,33 +215,16 @@ class ScanItemsPageState extends State<ScanItemsPage> {
       final sideItem = _scannedItems[1];
       final frontImage = frontItem['image'] as File;
       final sideImage = sideItem['image'] as File;
-      final frontPolygons = frontItem['polygons'] as List<List<Offset>>?;
-      final sidePolygons = sideItem['polygons'] as List<List<Offset>>?;
-      final frontSize = frontItem['size'] as Size;
-      final sideSize = sideItem['size'] as Size;
+      final frontPolygons = frontItem['polygons'] as List<List<List<double>>>?;
+      final sidePolygons = sideItem['polygons'] as List<List<List<double>>>?;
+
+      log('Front polygon data: $frontPolygons', name: 'APIRequest');
+      log('Side polygon data: $sidePolygons', name: 'APIRequest');
 
       final frontBytes = await frontImage.readAsBytes();
       final sideBytes = await sideImage.readAsBytes();
       final frontB64 = base64Encode(frontBytes);
       final sideB64 = base64Encode(sideBytes);
-
-      // Calculate canvas dimensions based on screen size
-      final mediaSize = MediaQuery.of(context).size;
-      final cw = mediaSize.width * 0.8; // 80% of screen width
-      final ch = mediaSize.height * 0.6; // 60% of screen height
-
-      final frontPolygonsTransformed = _transformPolygons(
-        frontPolygons,
-        cw,
-        ch,
-        frontSize,
-      );
-      final sidePolygonsTransformed = _transformPolygons(
-        sidePolygons,
-        cw,
-        ch,
-        sideSize,
-      );
 
       final payload = {
         "front_image_b64": frontB64,
@@ -304,9 +232,14 @@ class ScanItemsPageState extends State<ScanItemsPage> {
         "ref_obj_pos": _refObjPos,
         "ref_obj_width_real": _refObjWidthReal,
         "ref_obj_height_real": _refObjHeightReal,
-        "polygons_front_image": frontPolygonsTransformed,
-        "polygons_side_image": sidePolygonsTransformed,
+        "polygons_front_image": frontPolygons,
+        "polygons_side_image": sidePolygons,
       };
+
+      log(
+        'Sending API request with payload: ${jsonEncode(payload)}',
+        name: 'APIRequest',
+      );
 
       final response = await http.post(
         Uri.parse('https://measurementsystem.up.railway.app/measure'),
@@ -314,7 +247,8 @@ class ScanItemsPageState extends State<ScanItemsPage> {
         body: jsonEncode(payload),
       );
 
-      log('API Response: ${response.body}');
+      log('API Response: ${response.statusCode}', name: 'APIResponse');
+      log('API Response Body: ${response.body}', name: 'APIResponse');
 
       if (mounted) {
         Navigator.pop(context); // Close loading dialog
@@ -323,6 +257,7 @@ class ScanItemsPageState extends State<ScanItemsPage> {
       if (response.statusCode == 200) {
         final result = jsonDecode(response.body);
         if (result is Map<String, dynamic>) {
+          _itemCounter++;
           MeasurementResults().addItemData(
             _itemCounter,
             result['width'],
@@ -389,6 +324,11 @@ class ScanItemsPageState extends State<ScanItemsPage> {
                   ],
                 ),
           );
+
+          // Clear the scanned items after successful processing
+          setState(() {
+            _scannedItems = [];
+          });
         } else {
           showDialog(
             context: context,
@@ -411,7 +351,9 @@ class ScanItemsPageState extends State<ScanItemsPage> {
           builder:
               (context) => AlertDialog(
                 title: const Text('Error'),
-                content: Text('Failed to scan item: ${response.statusCode}'),
+                content: Text(
+                  'Failed to scan item: ${response.statusCode}\n${response.body}',
+                ),
                 actions: [
                   TextButton(
                     onPressed: () => Navigator.pop(context),
@@ -422,6 +364,7 @@ class ScanItemsPageState extends State<ScanItemsPage> {
         );
       }
     } catch (e) {
+      log('Error in scan process: $e', name: 'ScanError');
       if (mounted) {
         Navigator.pop(context); // Close loading dialog
       }
@@ -442,27 +385,6 @@ class ScanItemsPageState extends State<ScanItemsPage> {
     }
   }
 
-  List<List<List<double>>>? _transformPolygons(
-    List<List<Offset>>? polygons,
-    double cw,
-    double ch,
-    Size imgSize,
-  ) {
-    if (polygons == null) return null;
-    final iw = imgSize.width;
-    final ih = imgSize.height;
-    final s = (cw / iw < ch / ih) ? cw / iw : ch / ih;
-    final offsetX = (cw - s * iw) / 2;
-    final offsetY = (ch - s * ih) / 2;
-    return polygons.map((polygon) {
-      return polygon.map((point) {
-        final x = (point.dx - offsetX) / s;
-        final y = (point.dy - offsetY) / s;
-        return [x, y];
-      }).toList();
-    }).toList();
-  }
-
   void _showInstructionsDialog(BuildContext context) {
     showDialog(
       context: context,
@@ -471,15 +393,14 @@ class ScanItemsPageState extends State<ScanItemsPage> {
             title: const Text('Instructions'),
             content: SingleChildScrollView(
               child: Text(
-                drawPolygonOrNot
+                _isDrawingMode
                     ? '1. Click Capture to take the front image and draw polygons on it.\n'
-                        '2. Click Done to save it.\n'
-                        '3. Click Change Dimension, then Capture to take the side image and draw polygons.\n'
-                        '4. Click Done to save it.\n'
-                        '5. Click Scan Item to send the data and see the results.\n'
-                        '6. Click Next Item to reset and scan another item.'
+                        '2. Click Complete Polygon when you finish drawing each shape, and then press Finish Drawing.\n'
+                        '3. Click Capture again to take the side image and draw polygons.\n'
+                        '4. Click Scan Item to send the data and see the results.\n'
+                        '5. Click Next Item to reset and scan another item.'
                     : '1. Click Capture to take the front image (no polygons).\n'
-                        '2. Click Change Dimension, then Capture to take the side image (no polygons).\n'
+                        '2. Click Capture again to take the side image (no polygons).\n'
                         '3. Click Scan Item to send the data and see the results.\n'
                         '4. Click Next Item to reset and scan another item.',
               ),
@@ -501,12 +422,15 @@ class ScanItemsPageState extends State<ScanItemsPage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          'Scan Items',
-          style: TextStyle(
-            color: Colors.black,
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
+        title: const FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Text(
+            'Scan Items',
+            style: TextStyle(
+              color: Colors.black,
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+            ),
           ),
         ),
         backgroundColor: Colors.white,
@@ -538,10 +462,10 @@ class ScanItemsPageState extends State<ScanItemsPage> {
                   style: TextStyle(color: Colors.black, fontSize: 14),
                 ),
                 Switch(
-                  value: drawPolygonOrNot,
+                  value: _isDrawingMode,
                   onChanged: (value) {
                     setState(() {
-                      drawPolygonOrNot = value;
+                      _isDrawingMode = value;
                     });
                   },
                 ),
@@ -550,12 +474,12 @@ class ScanItemsPageState extends State<ScanItemsPage> {
           else
             IconButton(
               icon: Icon(
-                drawPolygonOrNot ? Icons.edit : Icons.edit_off,
+                _isDrawingMode ? Icons.edit : Icons.edit_off,
                 color: Colors.black,
               ),
               onPressed: () {
                 setState(() {
-                  drawPolygonOrNot = !drawPolygonOrNot;
+                  _isDrawingMode = !_isDrawingMode;
                 });
               },
               tooltip: 'Toggle Draw Polygons',
@@ -570,142 +494,42 @@ class ScanItemsPageState extends State<ScanItemsPage> {
       body: SafeArea(
         child: Column(
           children: [
-            if (!isDrawingMode)
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 8),
-                child: Text(
-                  _scannedItems.isEmpty
-                      ? 'Please capture the front image'
-                      : _scannedItems.length == 1
-                      ? 'Please capture the side image'
-                      : 'Ready to scan item',
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-            Expanded(
-              flex: 3,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 8,
-                ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(12),
-                  child: Container(
-                    width: double.infinity,
-                    color: Colors.grey[300],
-                    child:
-                        isDrawingMode
-                            ? _currentImage == null
-                                ? const Center(child: Text('No image'))
-                                : GestureDetector(
-                                  onTapDown: (details) {
-                                    final RenderBox renderBox =
-                                        context.findRenderObject() as RenderBox;
-                                    final Offset localPosition = renderBox
-                                        .globalToLocal(details.globalPosition);
-                                    _addPoint(localPosition);
-                                  },
-                                  child: Stack(
-                                    alignment: Alignment.center,
-                                    children: [
-                                      Image.file(
-                                        _currentImage!,
-                                        fit: BoxFit.contain,
-                                        width: double.infinity,
-                                        height: double.infinity,
-                                      ),
-                                      CustomPaint(
-                                        size: Size.infinite,
-                                        painter: PolygonPainter(
-                                          polygons: _currentPolygons,
-                                          currentPolygon: _currentPolygon,
-                                          drawSelection: drawSelection,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                )
-                            : _isCameraInitialized
-                            ? ClipRRect(
-                              borderRadius: BorderRadius.circular(12),
-                              child: AspectRatio(
-                                aspectRatio: _controller!.value.aspectRatio,
-                                child: CameraPreview(_controller!),
-                              ),
-                            )
-                            : const Center(child: CircularProgressIndicator()),
-                  ),
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              child: Text(
+                _scannedItems.isEmpty
+                    ? 'Please capture the front image'
+                    : _scannedItems.length == 1
+                    ? 'Please capture the side image'
+                    : 'Ready to scan item',
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
                 ),
               ),
             ),
-            if (isDrawingMode)
-              Container(
-                padding: const EdgeInsets.symmetric(vertical: 8),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    IconButton(
-                      icon: const Icon(Icons.undo),
-                      onPressed: _undoLastPoint,
-                      tooltip: 'Undo Last Point',
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.check),
-                      onPressed: _completePolygon,
-                      tooltip: 'Complete Polygon',
-                    ),
-                    ElevatedButton(
-                      onPressed: _finishDrawing,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xff4CAF50),
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                      ),
-                      child: const Text('Done'),
-                    ),
-                    IconButton(
-                      icon: Icon(
-                        drawSelection ? Icons.visibility : Icons.visibility_off,
-                      ),
-                      onPressed: () {
-                        setState(() {
-                          drawSelection = !drawSelection;
-                        });
-                      },
-                      tooltip: 'Toggle Visibility',
-                    ),
-                  ],
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              child: ElevatedButton.icon(
+                onPressed: () => _captureImage(true),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xff4CAF50),
+                  foregroundColor: Colors.white,
+                  padding: EdgeInsets.symmetric(
+                    horizontal: isSmallScreen ? 20 : 30,
+                    vertical: 12,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
                 ),
-              )
-            else
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 8),
-                child: ElevatedButton.icon(
-                  onPressed: () => _captureImage(true),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xff4CAF50),
-                    foregroundColor: Colors.white,
-                    padding: EdgeInsets.symmetric(
-                      horizontal: isSmallScreen ? 20 : 30,
-                      vertical: 12,
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                  ),
-                  icon: const Icon(Icons.camera_alt, size: 20),
-                  label: Text(
-                    'Capture',
-                    style: TextStyle(fontSize: isSmallScreen ? 16 : 18),
-                  ),
+                icon: const Icon(Icons.camera_alt, size: 20),
+                label: Text(
+                  'Capture from Camera',
+                  style: TextStyle(fontSize: isSmallScreen ? 16 : 18),
                 ),
               ),
+            ),
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 8),
               child: ElevatedButton.icon(
@@ -721,7 +545,7 @@ class ScanItemsPageState extends State<ScanItemsPage> {
                     borderRadius: BorderRadius.circular(8),
                   ),
                 ),
-                icon: const Icon(Icons.photo_library, color: Colors.black),
+                icon: const Icon(Icons.photo_library, color: Colors.white),
                 label: const Text(
                   'Select from Gallery',
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
@@ -731,13 +555,37 @@ class ScanItemsPageState extends State<ScanItemsPage> {
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 8),
               child: Text(
-                'Dimension Changes: $dimensionCounter',
+                'Number of Items Scanned: $_itemCounter',
                 style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w500,
                 ),
               ),
             ),
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              child: Text(
+                'Number of Images Captured: ${_scannedItems.length}/2',
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+            if (_scannedItems.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                child: Text(
+                  _scannedItems.length == 1
+                      ? 'Front image captured'
+                      : 'Front and side images captured',
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.green,
+                  ),
+                ),
+              ),
             const Spacer(),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),

@@ -26,7 +26,7 @@ class FunctionalityModel {
         boxIsSelected: false,
       ),
       FunctionalityModel(
-        name: 'Scan Item',
+        name: 'Scan Items',
         iconPath: 'assets/icons/scanner.svg',
         buttonPath: 'assets/icons/button.svg',
         boxIsSelected: false,
