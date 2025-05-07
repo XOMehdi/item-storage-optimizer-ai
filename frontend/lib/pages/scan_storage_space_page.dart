@@ -30,7 +30,8 @@ class ScanStorageSpacePageState extends State<ScanStorageSpacePage> {
   final double? _refObjWidthReal = ReferenceObject().referenceObjectWidth;
   final double? _refObjHeightReal = ReferenceObject().referenceObjectHeight;
 
-  bool _isDrawingMode = Preferences().drawSelection;
+  bool _isDrawingMode = Preferences().isDrawingMode;
+  final bool _showOutput = Preferences().isShowOutput;
   final List<Map<String, dynamic>> _scannedItem = [];
 
   @override
@@ -216,71 +217,110 @@ class ScanStorageSpacePageState extends State<ScanStorageSpacePage> {
           );
           MeasurementResults().setConfigData();
 
-          showDialog(
-            context: context,
-            builder:
-                (context) => AlertDialog(
-                  title: const Text('Measurement Successful'),
-                  content: SizedBox(
-                    width: MediaQuery.of(context).size.width * 0.9,
-                    height: MediaQuery.of(context).size.height * 0.7,
-                    child: SingleChildScrollView(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Width: ${result['width'] ?? 'N/A'} units\n'
-                            'Height: ${result['height'] ?? 'N/A'} units\n'
-                            'Depth: ${result['depth'] ?? 'N/A'} units',
-                            style: const TextStyle(fontSize: 16),
-                          ),
-                          const SizedBox(height: 10),
-                          if (result.containsKey('front_annotated_image') &&
-                              result['front_annotated_image'] != null) ...[
-                            const Text('Front Annotated Image:'),
-                            const SizedBox(height: 5),
-                            Image.memory(
-                              base64Decode(result['front_annotated_image']),
-                              width: double.infinity,
-                              fit: BoxFit.contain,
-                              errorBuilder:
-                                  (context, error, stackTrace) =>
-                                      const Text('Failed to load front image'),
+          String unit = Preferences().measurementUnit;
+          String unitLabel;
+          switch (unit) {
+            case 'centimeter':
+              unitLabel = 'cm';
+              break;
+            case 'inches':
+              unitLabel = 'in';
+              break;
+            case 'meter':
+              unitLabel = 'm';
+              break;
+            default:
+              unitLabel = 'cm'; // Fallback to 'cm' if unit is unrecognized
+          }
+          if (_showOutput) {
+            showDialog(
+              context: context,
+              builder:
+                  (context) => AlertDialog(
+                    title: const Text('Measurement Successful'),
+                    content: SizedBox(
+                      width: MediaQuery.of(context).size.width * 0.9,
+                      height: MediaQuery.of(context).size.height * 0.7,
+                      child: SingleChildScrollView(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Width: ${result['width'] ?? 'N/A'} $unitLabel\n'
+                              'Height: ${result['height'] ?? 'N/A'} $unitLabel\n'
+                              'Depth: ${result['depth'] ?? 'N/A'} $unitLabel',
+                              style: const TextStyle(fontSize: 16),
                             ),
+                            const SizedBox(height: 10),
+                            if (result.containsKey('front_annotated_image') &&
+                                result['front_annotated_image'] != null) ...[
+                              const Text('Front Annotated Image:'),
+                              const SizedBox(height: 5),
+                              Image.memory(
+                                base64Decode(result['front_annotated_image']),
+                                width: double.infinity,
+                                fit: BoxFit.contain,
+                                errorBuilder:
+                                    (context, error, stackTrace) => const Text(
+                                      'Failed to load front image',
+                                    ),
+                              ),
+                            ],
+                            const SizedBox(height: 10),
+                            if (result.containsKey('side_annotated_image') &&
+                                result['side_annotated_image'] != null) ...[
+                              const Text('Side Annotated Image:'),
+                              const SizedBox(height: 5),
+                              Image.memory(
+                                base64Decode(result['side_annotated_image']),
+                                width: double.infinity,
+                                fit: BoxFit.contain,
+                                errorBuilder:
+                                    (context, error, stackTrace) =>
+                                        const Text('Failed to load side image'),
+                              ),
+                            ],
                           ],
-                          const SizedBox(height: 10),
-                          if (result.containsKey('side_annotated_image') &&
-                              result['side_annotated_image'] != null) ...[
-                            const Text('Side Annotated Image:'),
-                            const SizedBox(height: 5),
-                            Image.memory(
-                              base64Decode(result['side_annotated_image']),
-                              width: double.infinity,
-                              fit: BoxFit.contain,
-                              errorBuilder:
-                                  (context, error, stackTrace) =>
-                                      const Text('Failed to load side image'),
-                            ),
-                          ],
-                        ],
+                        ),
                       ),
                     ),
+                    actions: [
+                      TextButton(
+                        onPressed: () {
+                          Navigator.pop(context);
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (context) => HomePage()),
+                          );
+                        },
+                        child: const Text('OK'),
+                      ),
+                    ],
                   ),
-                  actions: [
-                    TextButton(
-                      onPressed: () {
-                        Navigator.pop(context);
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (context) => HomePage()),
-                        );
-                      },
-                      child: const Text('OK'),
-                    ),
-                  ],
-                ),
-          );
+            );
+          } else {
+            showDialog(
+              context: context,
+              builder:
+                  (context) => AlertDialog(
+                    title: const Text('Measurement Successful'),
+                    content: Text('Storage Space Dimensions Stored.'),
+                    actions: [
+                      TextButton(
+                        onPressed: () {
+                          Navigator.pop(context);
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (context) => HomePage()),
+                          );
+                        },
+                        child: const Text('OK'),
+                      ),
+                    ],
+                  ),
+            );
+          }
         } else {
           showDialog(
             context: context,
@@ -304,7 +344,7 @@ class ScanStorageSpacePageState extends State<ScanStorageSpacePage> {
               (context) => AlertDialog(
                 title: const Text('Error'),
                 content: Text(
-                  'Failed to scan storage space: ${response.statusCode}',
+                  'Failed to scan storage space: ${response.statusCode}\n${response.body}',
                 ),
                 actions: [
                   TextButton(
@@ -347,14 +387,12 @@ class ScanStorageSpacePageState extends State<ScanStorageSpacePage> {
               child: Text(
                 _isDrawingMode
                     ? '1. Click Capture to take the front image and draw polygons on it.\n'
-                        '2. Click Done to save it.\n'
-                        '3. Click Change Dimension, then Capture to take the side image and draw polygons.\n'
-                        '4. Click Done to save it.\n'
-                        '5. Click Scan Item to send the data and see the results.\n'
-                        '6. Click Next Item to reset and scan another item.'
+                        '2. Click Complete Polygon when you finish drawing each shape, and then press Finish Drawing.\n'
+                        '3. Click Capture again to take the side image and draw polygons.\n'
+                        '4. Click Scan Storage Space to send the data and see the results.\n'
                     : '1. Click Capture to take the front image (no polygons).\n'
-                        '2. Click Change Dimension, then Capture to take the side image (no polygons).\n'
-                        '3. Click Scan Item to send the data and see the results.\n',
+                        '2. Click Capture again to take the side image (no polygons).\n'
+                        '3. Click Scan Storage Space to send the data and see the results.\n',
               ),
             ),
             actions: [
@@ -446,21 +484,20 @@ class ScanStorageSpacePageState extends State<ScanStorageSpacePage> {
       body: SafeArea(
         child: Column(
           children: [
-            if (!_isDrawingMode)
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 8),
-                child: Text(
-                  _scannedItem.isEmpty
-                      ? 'Please capture the front image'
-                      : _scannedItem.length == 1
-                      ? 'Please capture the side image'
-                      : 'Ready to scan storage space',
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              child: Text(
+                _scannedItem.isEmpty
+                    ? 'Please capture the front image'
+                    : _scannedItem.length == 1
+                    ? 'Please capture the side image'
+                    : 'Ready to scan storage space',
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
                 ),
               ),
+            ),
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 8),
               child: ElevatedButton.icon(

@@ -31,7 +31,8 @@ class ScanItemsPageState extends State<ScanItemsPage> {
   final double? _refObjHeightReal = ReferenceObject().referenceObjectHeight;
 
   int _itemCounter = 0;
-  bool _isDrawingMode = Preferences().drawSelection;
+  final bool _showOutput = Preferences().isShowOutput;
+  bool _isDrawingMode = Preferences().isDrawingMode;
 
   List<Map<String, dynamic>> _scannedItems = [];
 
@@ -265,66 +266,99 @@ class ScanItemsPageState extends State<ScanItemsPage> {
             result['depth'],
           );
 
-          showDialog(
-            context: context,
-            builder:
-                (context) => AlertDialog(
-                  title: const Text('Measurement Successful'),
-                  content: SizedBox(
-                    width: MediaQuery.of(context).size.width * 0.9,
-                    height: MediaQuery.of(context).size.height * 0.7,
-                    child: SingleChildScrollView(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Width: ${result['width'] ?? 'N/A'} units\n'
-                            'Height: ${result['height'] ?? 'N/A'} units\n'
-                            'Depth: ${result['depth'] ?? 'N/A'} units',
-                            style: const TextStyle(fontSize: 16),
-                          ),
-                          const SizedBox(height: 10),
-                          if (result.containsKey('front_annotated_image') &&
-                              result['front_annotated_image'] != null) ...[
-                            const Text('Front Annotated Image:'),
-                            const SizedBox(height: 5),
-                            Image.memory(
-                              base64Decode(result['front_annotated_image']),
-                              width: double.infinity,
-                              fit: BoxFit.contain,
-                              errorBuilder:
-                                  (context, error, stackTrace) =>
-                                      const Text('Failed to load front image'),
+          String unit = Preferences().measurementUnit;
+          String unitLabel;
+          switch (unit) {
+            case 'centimeter':
+              unitLabel = 'cm';
+              break;
+            case 'inches':
+              unitLabel = 'in';
+              break;
+            case 'meter':
+              unitLabel = 'm';
+              break;
+            default:
+              unitLabel = 'cm'; // Fallback to 'cm' if unit is unrecognized
+          }
+
+          if (_showOutput) {
+            showDialog(
+              context: context,
+              builder:
+                  (context) => AlertDialog(
+                    title: const Text('Measurement Successful'),
+                    content: SizedBox(
+                      width: MediaQuery.of(context).size.width * 0.9,
+                      height: MediaQuery.of(context).size.height * 0.7,
+                      child: SingleChildScrollView(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Width: ${result['width'] ?? 'N/A'} $unitLabel\n'
+                              'Height: ${result['height'] ?? 'N/A'} $unitLabel\n'
+                              'Depth: ${result['depth'] ?? 'N/A'} $unitLabel',
+                              style: const TextStyle(fontSize: 16),
                             ),
+                            const SizedBox(height: 10),
+                            if (result.containsKey('front_annotated_image') &&
+                                result['front_annotated_image'] != null) ...[
+                              const Text('Front Annotated Image:'),
+                              const SizedBox(height: 5),
+                              Image.memory(
+                                base64Decode(result['front_annotated_image']),
+                                width: double.infinity,
+                                fit: BoxFit.contain,
+                                errorBuilder:
+                                    (context, error, stackTrace) => const Text(
+                                      'Failed to load front image',
+                                    ),
+                              ),
+                            ],
+                            const SizedBox(height: 10),
+                            if (result.containsKey('side_annotated_image') &&
+                                result['side_annotated_image'] != null) ...[
+                              const Text('Side Annotated Image:'),
+                              const SizedBox(height: 5),
+                              Image.memory(
+                                base64Decode(result['side_annotated_image']),
+                                width: double.infinity,
+                                fit: BoxFit.contain,
+                                errorBuilder:
+                                    (context, error, stackTrace) =>
+                                        const Text('Failed to load side image'),
+                              ),
+                            ],
                           ],
-                          const SizedBox(height: 10),
-                          if (result.containsKey('side_annotated_image') &&
-                              result['side_annotated_image'] != null) ...[
-                            const Text('Side Annotated Image:'),
-                            const SizedBox(height: 5),
-                            Image.memory(
-                              base64Decode(result['side_annotated_image']),
-                              width: double.infinity,
-                              fit: BoxFit.contain,
-                              errorBuilder:
-                                  (context, error, stackTrace) =>
-                                      const Text('Failed to load side image'),
-                            ),
-                          ],
-                        ],
+                        ),
                       ),
                     ),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(context),
+                        child: const Text('OK'),
+                      ),
+                    ],
                   ),
-                  actions: [
-                    TextButton(
-                      onPressed: () => Navigator.pop(context),
-                      child: const Text('OK'),
-                    ),
-                  ],
-                ),
-          );
-
+            );
+          } else {
+            showDialog(
+              context: context,
+              builder:
+                  (context) => AlertDialog(
+                    title: const Text('Measurement Successful'),
+                    content: Text('Item Dimensions Stored.'),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(context),
+                        child: const Text('OK'),
+                      ),
+                    ],
+                  ),
+            );
+          }
           // Clear the scanned items after successful processing
           setState(() {
             _scannedItems = [];

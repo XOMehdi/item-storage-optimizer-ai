@@ -12,8 +12,12 @@ class SetupReferenceObject extends StatefulWidget {
 }
 
 class SetupReferenceObjectState extends State<SetupReferenceObject> {
-  final TextEditingController _widthController = TextEditingController();
-  final TextEditingController _heightController = TextEditingController();
+  final TextEditingController _widthController = TextEditingController(
+    text: ReferenceObject().referenceObjectWidth?.toString() ?? '',
+  );
+  final TextEditingController _heightController = TextEditingController(
+    text: ReferenceObject().referenceObjectHeight?.toString() ?? '',
+  );
 
   @override
   void initState() {
@@ -133,14 +137,15 @@ class SetupReferenceObjectState extends State<SetupReferenceObject> {
                 ),
                 SizedBox(
                   width: 150,
-                  child: DropdownButtonFormField<String>(
+                    child: DropdownButtonFormField<String>(
+                    value: ReferenceObject().referenceObjectPosition,
                     decoration: InputDecoration(
                       border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
+                      borderRadius: BorderRadius.circular(8),
                       ),
                       contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 8,
+                      horizontal: 12,
+                      vertical: 8,
                       ),
                       hintText: 'Select value',
                       hintStyle: const TextStyle(color: Colors.black38),

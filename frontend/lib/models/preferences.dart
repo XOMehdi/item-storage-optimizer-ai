@@ -4,6 +4,6 @@ class Preferences {
   Preferences._internal();
 
   String measurementUnit = 'centimeter';
-  bool drawSelection = false;
-  bool showOutput = true;
+  bool isDrawingMode = false;
+  bool isShowOutput = true;
 }

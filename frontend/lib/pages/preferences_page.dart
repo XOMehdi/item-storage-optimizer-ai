@@ -155,13 +155,13 @@ class PreferencesPageState extends State<PreferencesPage> {
               decoration: sectionDecoration,
               child: SwitchListTile(
                 title: const Text('Draw Selection'),
-                value: Preferences().drawSelection,
+                value: Preferences().isDrawingMode,
                 onChanged: (bool value) {
                   setState(() {
-                    Preferences().drawSelection = value;
+                    Preferences().isDrawingMode = value;
                   });
                 },
-                subtitle: Text(Preferences().drawSelection ? 'Yes' : 'No'),
+                subtitle: Text(Preferences().isDrawingMode ? 'Yes' : 'No'),
               ),
             ),
             const SizedBox(height: 20),
@@ -170,13 +170,13 @@ class PreferencesPageState extends State<PreferencesPage> {
               decoration: sectionDecoration,
               child: SwitchListTile(
                 title: const Text('Show Output'),
-                value: Preferences().showOutput,
+                value: Preferences().isShowOutput,
                 onChanged: (bool value) {
                   setState(() {
-                    Preferences().showOutput = value;
+                    Preferences().isShowOutput = value;
                   });
                 },
-                subtitle: Text(Preferences().showOutput ? 'Yes' : 'No'),
+                subtitle: Text(Preferences().isShowOutput ? 'Yes' : 'No'),
               ),
             ),
           ],
