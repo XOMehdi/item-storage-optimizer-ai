@@ -6,12 +6,12 @@ import 'dart:io';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:image/image.dart' as img;
-import 'package:frontend/pages/home_page.dart';
-import 'package:frontend/models/preferences.dart';
-import 'package:frontend/models/reference_object.dart';
-import 'package:frontend/models/measurement_results.dart';
-import 'package:frontend/pages/camera_capture_page.dart';
-import 'package:frontend/pages/drawing_page.dart';
+import 'package:item_storage_optimizer_ai/pages/home_page.dart';
+import 'package:item_storage_optimizer_ai/models/preferences.dart';
+import 'package:item_storage_optimizer_ai/models/reference_object.dart';
+import 'package:item_storage_optimizer_ai/models/measurement_results.dart';
+import 'package:item_storage_optimizer_ai/pages/camera_capture_page.dart';
+import 'package:item_storage_optimizer_ai/pages/drawing_page.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();

@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'dart:developer';
 import 'package:http/http.dart' as http;
-import 'package:frontend/models/measurement_results.dart';
-import 'package:frontend/pages/home_page.dart';
+import 'package:item_storage_optimizer_ai/models/measurement_results.dart';
+import 'package:item_storage_optimizer_ai/pages/home_page.dart';
 
 class OptimizerPage extends StatefulWidget {
   const OptimizerPage({super.key});

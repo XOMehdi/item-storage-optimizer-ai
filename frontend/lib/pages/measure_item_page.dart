@@ -2,11 +2,11 @@ import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:camera/camera.dart';
-import 'package:frontend/pages/home_page.dart';
+import 'package:item_storage_optimizer_ai/pages/home_page.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:frontend/models/reference_object.dart';
+import 'package:item_storage_optimizer_ai/models/reference_object.dart';
 
 class MeasureItemPage extends StatefulWidget {
   const MeasureItemPage({super.key});

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:frontend/models/preferences.dart';
+import 'package:item_storage_optimizer_ai/models/preferences.dart';
 
 class PreferencesPage extends StatefulWidget {
   const PreferencesPage({super.key});

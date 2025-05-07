@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'dart:developer';
 import 'package:webview_flutter/webview_flutter.dart';
-import 'package:frontend/models/measurement_results.dart';
+import 'package:item_storage_optimizer_ai/models/measurement_results.dart';
 
 class VisualizerPage extends StatefulWidget {
   const VisualizerPage({super.key});

@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:frontend/pages/home_page.dart';
-import 'package:frontend/pages/setup_refrence_object.dart';
-import 'package:frontend/pages/measure_item_page.dart';
-import 'package:frontend/pages/scan_items_page.dart';
-import 'package:frontend/pages/scan_storage_space_page.dart';
-import 'package:frontend/pages/optimizer_page.dart';
-import 'package:frontend/pages/preferences_page.dart';
-import 'package:frontend/pages/visualizer_page.dart';
+import 'package:item_storage_optimizer_ai/pages/home_page.dart';
+import 'package:item_storage_optimizer_ai/pages/setup_refrence_object.dart';
+import 'package:item_storage_optimizer_ai/pages/measure_item_page.dart';
+import 'package:item_storage_optimizer_ai/pages/scan_items_page.dart';
+import 'package:item_storage_optimizer_ai/pages/scan_storage_space_page.dart';
+import 'package:item_storage_optimizer_ai/pages/optimizer_page.dart';
+import 'package:item_storage_optimizer_ai/pages/preferences_page.dart';
+import 'package:item_storage_optimizer_ai/pages/visualizer_page.dart';
 
 void main() {
   runApp(const MyApp());

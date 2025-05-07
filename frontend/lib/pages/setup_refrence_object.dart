@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:frontend/pages/home_page.dart';
-import 'package:frontend/models/preferences.dart';
-import 'package:frontend/models/reference_object.dart';
+import 'package:item_storage_optimizer_ai/pages/home_page.dart';
+import 'package:item_storage_optimizer_ai/models/preferences.dart';
+import 'package:item_storage_optimizer_ai/models/reference_object.dart';
 
 class SetupReferenceObject extends StatefulWidget {
   const SetupReferenceObject({super.key});
@@ -137,15 +137,15 @@ class SetupReferenceObjectState extends State<SetupReferenceObject> {
                 ),
                 SizedBox(
                   width: 150,
-                    child: DropdownButtonFormField<String>(
+                  child: DropdownButtonFormField<String>(
                     value: ReferenceObject().referenceObjectPosition,
                     decoration: InputDecoration(
                       border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
+                        borderRadius: BorderRadius.circular(8),
                       ),
                       contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 8,
+                        horizontal: 12,
+                        vertical: 8,
                       ),
                       hintText: 'Select value',
                       hintStyle: const TextStyle(color: Colors.black38),
